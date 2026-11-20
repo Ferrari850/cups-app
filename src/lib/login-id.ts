@@ -4,8 +4,15 @@
  */
 export const ID_DOMAIN = "cups.local";
 
+/** Turn Arabic-Indic (٠-٩) and Persian (۰-۹) digits into 0-9, so an Arabic keyboard works too. */
+export function normalizeDigits(input: string) {
+  return input
+    .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\u06f0-\u06f9]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
+}
+
 export function toLoginEmail(input: string) {
-  const v = input.trim().toLowerCase();
+  const v = normalizeDigits(input).replace(/\s+/g, "").toLowerCase();
   return v.includes("@") ? v : `${v}@${ID_DOMAIN}`;
 }
 
