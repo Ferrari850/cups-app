@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/session";
+import { normalizeDigits } from "@/lib/login-id";
 
 export async function updateProfile(_: unknown, form: FormData) {
   const { supabase, profile } = await getSession();
@@ -15,8 +16,8 @@ export async function updateProfile(_: unknown, form: FormData) {
 
 export async function changePassword(_: unknown, form: FormData) {
   const { supabase } = await getSession();
-  const password = String(form.get("password") ?? "");
-  if (password.length < 8) return { ok: false, error: "8+" };
+  const password = normalizeDigits(String(form.get("password") ?? ""));
+  if (password.length < 6) return { ok: false, error: "6+" };
   const { error } = await supabase.auth.updateUser({ password });
   return { ok: !error, error: error?.message };
 }

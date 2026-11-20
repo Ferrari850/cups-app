@@ -17,7 +17,7 @@ export default function AddStaff({ t, isOwner }: { t: Dict; isOwner: boolean }) 
     <form action={action} className="card space-y-3">
       <h2 className="h2">{t.addStaff}</h2>
       <input name="full_name" placeholder={t.name} required className="input" />
-      <input name="email" type="email" placeholder={t.email} required className="input" dir="ltr" />
+      <input name="email" type="text" placeholder={t.loginIdHint} required autoCapitalize="none" className="input" dir="ltr" />
       <div className="grid grid-cols-2 gap-2">
         <input name="position" placeholder={t.position} className="input" />
         <input name="phone" type="tel" placeholder={t.phone} className="input" dir="ltr" />
