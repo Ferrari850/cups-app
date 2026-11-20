@@ -16,7 +16,7 @@ export async function updateProfile(_: unknown, form: FormData) {
 export async function changePassword(_: unknown, form: FormData) {
   const { supabase } = await getSession();
   const password = String(form.get("password") ?? "");
-  if (password.length < 8) return { ok: false, error: "8+" };
+  if (password.length < 6) return { ok: false, error: "6+" };
   const { error } = await supabase.auth.updateUser({ password });
   return { ok: !error, error: error?.message };
 }
