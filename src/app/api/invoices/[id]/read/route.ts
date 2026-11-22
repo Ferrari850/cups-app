@@ -59,6 +59,12 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     };
 
     const baseUnitOf = new Map(known.map((k) => [k.id, k.base_unit]));
+    // Catch the classic mix-up: "BUN 400G" counted in pieces but given 400 as the pieces per pack.
+    const sanePack = (desc: string, unit: string, pack: number | null) => {
+      if (unit !== "pcs" || pack == null) return pack;
+      const weights = [...desc.matchAll(/(\d+(?:[.,]\d+)?)\s*(?:g|gm|gr|grams?|ml|kg|l|ltr)\b/gi)].map((m) => Number(m[1].replace(",", ".")));
+      return weights.includes(Number(pack)) ? null : pack;
+    };
     const lines = inv.lines.map((l, i) => {
       const alias = aliasFor(l.description);
       const itemId = alias?.item_id ?? (l.matched_item_id && knownIds.has(l.matched_item_id) ? l.matched_item_id : null);
@@ -71,7 +77,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         unit: l.unit,
         unit_price: l.unit_price ?? (l.line_total != null && l.quantity ? l.line_total / l.quantity : null),
         line_total: l.line_total,
-        pack_size: alias?.pack_size ?? l.pack_size,
+        pack_size:
+          alias?.pack_size ??
+          sanePack(l.description, (itemId && baseUnitOf.get(itemId)) || l.base_unit, l.pack_size),
         base_unit: (itemId && baseUnitOf.get(itemId)) || l.base_unit,
         skip: !l.is_ingredient,
         suggested_name: l.description_en,

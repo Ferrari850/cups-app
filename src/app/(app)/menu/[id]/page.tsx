@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireManager } from "@/lib/session";
 import { fmtAED, fmtNum } from "@/lib/format";
@@ -25,7 +26,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
       .select("id, quantity, waste_pct, items(id, name, name_ar, base_unit, unit_cost)")
       .eq("menu_item_id", id)
       .order("sort"),
-    supabase.from("items").select("id, name, name_ar, base_unit").order("name"),
+    supabase.from("items").select("id, name, name_ar, base_unit, unit_cost").order("name"),
   ]);
   if (!m) notFound();
   const lines = (lineData ?? []) as unknown as Line[];
@@ -51,7 +52,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         </div>
         <div>
           <div className="muted">{t.margin}</div>
-          <div className="num text-xl font-bold">{net != null ? fmtAED(net - cost, locale) : "–"}</div>
+          <div className="num text-xl font-bold">{net != null && lines.length ? fmtAED(net - cost, locale) : "–"}</div>
         </div>
         <div>
           <div className="muted">{t.foodCost}</div>
@@ -66,6 +67,31 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
       </div>
 
       <h2 className="h2 mb-2">{t.recipe}</h2>
+      {lines.length === 0 && <p className="muted mb-3">{t.recipeEmpty}</p>}
+      <form action={addRecipeLine} className="card mb-4 space-y-2 border-2 border-bean-300">
+        <input type="hidden" name="menu_item_id" value={id} />
+        <label className="label text-base font-semibold">+ {t.addIngredient}</label>
+        {(items ?? []).length === 0 && (
+          <p className="text-sm text-amber-800">
+            {t.noItemsYet}{" "}
+            <Link href="/invoices/new" className="underline">{t.newInvoice}</Link>
+          </p>
+        )}
+        <select name="item_id" required className="input" defaultValue="">
+          <option value="" disabled>—</option>
+          {(items ?? []).map((i) => (
+            <option key={i.id} value={i.id}>
+              {localName(i, locale)} ({unitLabel(i.base_unit)}){i.unit_cost != null ? ` · ${fmtAED(Number(i.unit_cost) * (i.base_unit === "pcs" ? 1 : 1000), locale)}/${i.base_unit === "pcs" ? unitLabel("pcs") : i.base_unit === "g" ? "kg" : "L"}` : ""}
+            </option>
+          ))}
+        </select>
+        <div className="grid grid-cols-2 gap-2">
+          <input name="quantity" required inputMode="decimal" placeholder={t.quantity} className="input num" />
+          <input name="waste_pct" inputMode="decimal" placeholder={`${t.waste} (${t.optional})`} className="input num" />
+        </div>
+        <SubmitButton>{t.add}</SubmitButton>
+      </form>
+
       <ul className="mb-3 space-y-2">
         {lines.map((l) => {
           const c = lineCost(l);
@@ -90,24 +116,6 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
           );
         })}
       </ul>
-
-      <form action={addRecipeLine} className="card mb-6 space-y-2">
-        <input type="hidden" name="menu_item_id" value={id} />
-        <label className="label">{t.addIngredient}</label>
-        <select name="item_id" required className="input" defaultValue="">
-          <option value="" disabled>—</option>
-          {(items ?? []).map((i) => (
-            <option key={i.id} value={i.id}>
-              {localName(i, locale)} ({unitLabel(i.base_unit)})
-            </option>
-          ))}
-        </select>
-        <div className="grid grid-cols-2 gap-2">
-          <input name="quantity" required inputMode="decimal" placeholder={t.quantity} className="input num" />
-          <input name="waste_pct" inputMode="decimal" placeholder={`${t.waste} (${t.optional})`} className="input num" />
-        </div>
-        <SubmitButton>{t.add}</SubmitButton>
-      </form>
 
       <details className="card">
         <summary className="cursor-pointer font-medium">{t.edit}</summary>
