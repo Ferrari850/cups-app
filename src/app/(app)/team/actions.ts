@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireManager } from "@/lib/session";
 import { createServiceClient } from "@/lib/supabase/server";
+import { displayLogin, toLoginEmail } from "@/lib/login-id";
 
 function tempPassword() {
   const words = ["latte", "mocha", "chai", "karak", "dates", "beans", "cream", "sugar"];
@@ -12,7 +13,7 @@ function tempPassword() {
 
 export async function addStaff(_: unknown, form: FormData) {
   const { isOwner } = await requireManager();
-  const email = String(form.get("email") ?? "").trim().toLowerCase();
+  const email = toLoginEmail(String(form.get("email") ?? ""));
   const full_name = String(form.get("full_name") ?? "").trim();
   const position = String(form.get("position") ?? "").trim() || null;
   const phone = String(form.get("phone") ?? "").trim() || null;
@@ -30,7 +31,7 @@ export async function addStaff(_: unknown, form: FormData) {
   if (error || !data.user) return { ok: false, error: error?.message ?? "error" };
   await admin.from("profiles").update({ full_name, position, phone, role }).eq("id", data.user.id);
   revalidatePath("/team");
-  return { ok: true, email, password };
+  return { ok: true, email: displayLogin(email), password };
 }
 
 export async function updateMember(form: FormData) {

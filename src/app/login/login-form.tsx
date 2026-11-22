@@ -9,8 +9,8 @@ export default function LoginForm({ t }: { t: Dict }) {
   return (
     <form action={action} className="card space-y-4">
       <div>
-        <label className="label" htmlFor="email">{t.email}</label>
-        <input id="email" name="email" type="email" autoComplete="email" required className="input" dir="ltr" />
+        <label className="label" htmlFor="email">{t.loginId}</label>
+        <input id="email" name="email" type="text" autoComplete="username" autoCapitalize="none" required className="input" dir="ltr" />
       </div>
       <div>
         <label className="label" htmlFor="password">{t.password}</label>

@@ -32,7 +32,7 @@ export const InvoiceSchema = z.object({
         .number()
         .nullable()
         .describe(
-          "How many base units are in ONE invoice unit. Examples: carton of 6 x 2L milk = 12000 (ml); 1 KG = 1000 (g); box of 12 x 500g = 6000 (g); tray of 30 eggs = 30 (pcs). null if you cannot tell.",
+          "How many base units are in ONE invoice unit. Examples: carton of 6 x 2L milk = 12000 (ml); 1 KG = 1000 (g); box of 12 x 500g = 6000 (g); tray of 30 eggs = 30 (pcs). If base_unit is pcs, give the number of pieces in one unit (a pack of 6 buns = 6), never the weight. If the count isn't printed, use the usual count for that product in the UAE (e.g. a 400g brioche bun pack = 6) and say in notes that you estimated it. null only if you have no idea.",
         ),
       matched_item_id: z
         .string()
@@ -84,7 +84,7 @@ export async function readInvoice(files: InvoiceFile[], known: KnownItem[]): Pro
 
   content.push({
     type: "text",
-    text: `Known ingredients (id | name | arabic name | unit):\n${knownList}\n\nExtract this invoice (${files.length} page(s)).`,
+    text: `Today's date (Dubai): ${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Dubai" })}.\n\nKnown ingredients (id | name | arabic name | unit):\n${knownList}\n\nExtract this invoice (${files.length} page(s)).`,
   });
 
   const response = await client.beta.messages.parse({
