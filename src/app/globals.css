@@ -151,6 +151,11 @@ body {
 @utility icon-btn {
   @apply inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-surface text-bean-700 shadow-card transition active:scale-95;
 }
+/* Page side padding that also clears the notch when a phone is turned sideways. */
+@utility px-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
 @utility input {
   @apply block w-full min-h-11 rounded-2xl border border-transparent bg-bean-50 px-3.5 text-base text-bean-900 outline-none transition placeholder:text-bean-500 focus:border-accent focus:bg-surface focus:ring-4 focus:ring-accent-soft;
 }
@@ -215,5 +220,22 @@ select.input {
   }
   body {
     background: #fff;
+  }
+}
+
+/* Phones and tablets: iPhones zoom into any box typed in below 16px, so keep typing at 16px;
+   stop the text from growing when a phone is turned sideways; never let the page slide sideways. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+body {
+  overflow-x: clip;
+}
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
   }
 }

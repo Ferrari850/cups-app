@@ -54,7 +54,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h1 className="h1">{t.schedule}</h1>
         <div className="seg">
           <Link href={link(week, "")} className={`seg-item ${!mine ? "seg-on" : ""}`}>{t.everyone}</Link>
