@@ -56,9 +56,9 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
     <>
       <div className="mb-3 flex items-center justify-between">
         <h1 className="h1">{t.schedule}</h1>
-        <div className="flex rounded-xl bg-bean-100 p-1 text-sm">
-          <Link href={link(week, "")} className={`rounded-lg px-3 py-1.5 ${!mine ? "bg-white shadow-sm" : ""}`}>{t.everyone}</Link>
-          <Link href={link(week, "mine")} className={`rounded-lg px-3 py-1.5 ${mine ? "bg-white shadow-sm" : ""}`}>{t.myShifts}</Link>
+        <div className="seg">
+          <Link href={link(week, "")} className={`seg-item ${!mine ? "seg-on" : ""}`}>{t.everyone}</Link>
+          <Link href={link(week, "mine")} className={`seg-item ${mine ? "seg-on" : ""}`}>{t.myShifts}</Link>
         </div>
       </div>
 
@@ -93,8 +93,8 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
         {days.map((d) => {
           const list = byDay.get(d)!;
           return (
-            <section key={d} className={`card ${d === today ? "ring-2 ring-bean-300" : ""}`}>
-              <h2 className="mb-2 font-semibold">{fmtDay(d + "T12:00:00Z", locale)}</h2>
+            <section key={d} className={`card ${d === today ? "ring-2 ring-accent" : ""}`}>
+              <h2 className="mb-2 flex items-center gap-2 font-bold">{fmtDay(d + "T12:00:00Z", locale)}{d === today && <span className="badge bg-accent-soft text-accent-ink">{t.today}</span>}</h2>
               {list.length === 0 ? (
                 <p className="muted">{mine ? t.off : "—"}</p>
               ) : (
@@ -144,7 +144,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
 
       {isManager && hours.size > 0 && !mine && (
         <section className="card mt-4">
-          <h2 className="h2 mb-2">{t.hours}</h2>
+          <h2 className="eyebrow mb-3">{t.hours}</h2>
           <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             {[...hours.values()]
               .sort((a, b) => b.h - a.h)

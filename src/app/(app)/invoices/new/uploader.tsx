@@ -88,7 +88,7 @@ export default function Uploader({ t }: { t: Dict }) {
   if (busy)
     return (
       <div className="card flex flex-col items-center gap-4 py-12 text-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-bean-200 border-t-bean-700" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-bean-200 border-t-accent" />
         <p className="font-medium">{busy === "upload" ? t.uploading : t.reading}</p>
       </div>
     );
@@ -99,10 +99,10 @@ export default function Uploader({ t }: { t: Dict }) {
       <input ref={filesRef} type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
 
       <div className="grid grid-cols-2 gap-2">
-        <button className="btn-primary py-6 text-base" onClick={() => cameraRef.current?.click()}>
+        <button className="btn-primary flex-col py-6 text-base" onClick={() => cameraRef.current?.click()}>
           <Icon name="camera" className="h-6 w-6" /> {pages.length ? t.addPage : t.takePhoto}
         </button>
-        <button className="btn-secondary py-6 text-base" onClick={() => filesRef.current?.click()}>
+        <button className="btn-secondary flex-col bg-surface py-6 text-base shadow-card" onClick={() => filesRef.current?.click()}>
           <Icon name="receipt" className="h-6 w-6" /> {t.choosePhotos}
         </button>
       </div>
@@ -114,7 +114,7 @@ export default function Uploader({ t }: { t: Dict }) {
           </p>
           <ul className="grid grid-cols-3 gap-2">
             {pages.map((p, i) => (
-              <li key={i} className="relative overflow-hidden rounded-xl bg-white ring-1 ring-bean-100">
+              <li key={i} className="relative overflow-hidden rounded-xl bg-surface ring-1 ring-bean-100">
                 {p.preview ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.preview} alt="" className="aspect-[3/4] w-full object-cover" />

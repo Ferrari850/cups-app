@@ -1,16 +1,115 @@
 @import "tailwindcss";
 
+/*
+ * Colors are CSS variables so the whole app can switch between light and dark.
+ * "bean" is the neutral scale (page, lines, text); "accent" is the purple used for
+ * selected tabs and main buttons; amber is the warm color for things that are "on"
+ * or need attention.
+ */
 @theme {
-  --color-bean-50: #faf6f1;
-  --color-bean-100: #f1e8dc;
-  --color-bean-200: #e3d0b8;
-  --color-bean-300: #cfae8a;
-  --color-bean-500: #a0703f;
-  --color-bean-600: #8a5a2e;
-  --color-bean-700: #6e4524;
-  --color-bean-800: #4e311b;
-  --color-bean-900: #2f1d10;
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Arabic", Tahoma, sans-serif;
+  --color-page: #eceef3;
+  --color-surface: #ffffff;
+  --color-bean-50: #f3f4f7;
+  --color-bean-100: #e8e9ef;
+  --color-bean-200: #d9dbe4;
+  --color-bean-300: #b3b6c4;
+  --color-bean-500: #7d8194;
+  --color-bean-600: #6a6e81;
+  --color-bean-700: #3c3f50;
+  --color-bean-800: #2a2c3a;
+  --color-bean-900: #15161f;
+  --color-accent: #5b51c7;
+  --color-accent-strong: #4a40b0;
+  --color-accent-soft: #ecebfb;
+  --color-accent-ink: #4a40b0;
+  --shadow-card: 0 1px 2px rgb(20 22 40 / 0.04), 0 4px 18px rgb(20 22 40 / 0.05);
+  --shadow-float: 0 8px 30px rgb(20 22 40 / 0.12);
+  --font-sans: "Plus Jakarta Sans Variable", "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", Roboto, Tahoma, sans-serif;
+}
+
+/* Dark colors. Used when the person picks Dark, or picks nothing and the phone is in dark mode. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-page: #0e0f14;
+    --color-surface: #181a22;
+    --color-bean-50: #20222b;
+    --color-bean-100: #272a34;
+    --color-bean-200: #333743;
+    --color-bean-300: #4d5262;
+    --color-bean-500: #8a8fa3;
+    --color-bean-600: #9ca1b4;
+    --color-bean-700: #cdd0dc;
+    --color-bean-800: #e1e3eb;
+    --color-bean-900: #f3f4f8;
+    --color-accent: #7d73ec;
+    --color-accent-strong: #8f86f2;
+    --color-accent-soft: #2a2751;
+    --color-accent-ink: #b3adff;
+    --color-amber-50: #2a2116;
+    --color-amber-100: #3a2c18;
+    --color-amber-200: #5a4322;
+    --color-amber-300: #7a5a29;
+    --color-amber-700: #e6b26a;
+    --color-amber-800: #eec081;
+    --color-amber-900: #f4d3a1;
+    --color-green-50: #13261c;
+    --color-green-100: #173322;
+    --color-green-700: #6fd39a;
+    --color-green-800: #86dcab;
+    --color-green-900: #a7e8c2;
+    --color-red-50: #2c1618;
+    --color-red-100: #3b1b1e;
+    --color-red-600: #f0707a;
+    --color-red-700: #f38b92;
+    --color-red-800: #f5a2a7;
+    --color-blue-100: #172a45;
+    --color-blue-800: #8db8f5;
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+    --shadow-float: 0 8px 30px rgb(0 0 0 / 0.5);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-page: #0e0f14;
+  --color-surface: #181a22;
+  --color-bean-50: #20222b;
+  --color-bean-100: #272a34;
+  --color-bean-200: #333743;
+  --color-bean-300: #4d5262;
+  --color-bean-500: #8a8fa3;
+  --color-bean-600: #9ca1b4;
+  --color-bean-700: #cdd0dc;
+  --color-bean-800: #e1e3eb;
+  --color-bean-900: #f3f4f8;
+  --color-accent: #7d73ec;
+  --color-accent-strong: #8f86f2;
+  --color-accent-soft: #2a2751;
+  --color-accent-ink: #b3adff;
+  --color-amber-50: #2a2116;
+  --color-amber-100: #3a2c18;
+  --color-amber-200: #5a4322;
+  --color-amber-300: #7a5a29;
+  --color-amber-700: #e6b26a;
+  --color-amber-800: #eec081;
+  --color-amber-900: #f4d3a1;
+  --color-green-50: #13261c;
+  --color-green-100: #173322;
+  --color-green-700: #6fd39a;
+  --color-green-800: #86dcab;
+  --color-green-900: #a7e8c2;
+  --color-red-50: #2c1618;
+  --color-red-100: #3b1b1e;
+  --color-red-600: #f0707a;
+  --color-red-700: #f38b92;
+  --color-red-800: #f5a2a7;
+  --color-blue-100: #172a45;
+  --color-blue-800: #8db8f5;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-float: 0 8px 30px rgb(0 0 0 / 0.5);
+}
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 html {
@@ -18,18 +117,27 @@ html {
 }
 
 body {
-  background: var(--color-bean-50);
+  background: var(--color-page);
   color: var(--color-bean-900);
 }
 
+/* Arabic text gets the Arabic font first so letters join and look right. */
+:lang(ar) body {
+  font-family: "IBM Plex Sans Arabic", "Plus Jakarta Sans Variable", system-ui, Tahoma, sans-serif;
+}
+
 @utility card {
-  @apply rounded-2xl bg-white p-4 shadow-sm ring-1 ring-bean-100;
+  @apply rounded-3xl bg-surface p-4 shadow-card;
+}
+/* A softer row inside a card, like the rows in a list panel. */
+@utility tile {
+  @apply rounded-2xl bg-bean-50 p-3;
 }
 @utility btn {
-  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition active:scale-[.98] disabled:opacity-50;
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold transition active:scale-[.98] disabled:opacity-50;
 }
 @utility btn-primary {
-  @apply btn bg-bean-700 text-white hover:bg-bean-800;
+  @apply btn bg-accent text-white shadow-[0_6px_16px_-6px_var(--color-accent)] hover:bg-accent-strong;
 }
 @utility btn-secondary {
   @apply btn bg-bean-100 text-bean-800 hover:bg-bean-200;
@@ -38,25 +146,42 @@ body {
   @apply btn bg-red-50 text-red-700 hover:bg-red-100;
 }
 @utility btn-sm {
-  @apply min-h-9 px-3 text-xs;
+  @apply min-h-9 rounded-xl px-3 text-xs;
+}
+@utility icon-btn {
+  @apply inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-surface text-bean-700 shadow-card transition active:scale-95;
 }
 @utility input {
-  @apply block w-full min-h-11 rounded-xl border border-bean-200 bg-white px-3 text-base outline-none focus:border-bean-500 focus:ring-2 focus:ring-bean-200;
+  @apply block w-full min-h-11 rounded-2xl border border-transparent bg-bean-50 px-3.5 text-base text-bean-900 outline-none transition placeholder:text-bean-500 focus:border-accent focus:bg-surface focus:ring-4 focus:ring-accent-soft;
 }
 @utility label {
-  @apply mb-1 block text-sm font-medium text-bean-800;
+  @apply mb-1.5 block text-xs font-semibold tracking-wide text-bean-600 uppercase;
 }
 @utility h1 {
-  @apply text-2xl font-bold text-bean-900;
+  @apply text-[1.7rem] leading-tight font-extrabold tracking-tight text-bean-900;
 }
 @utility h2 {
-  @apply text-lg font-semibold text-bean-900;
+  @apply text-lg font-bold text-bean-900;
+}
+/* Small gray capital-letter label above a card or list. */
+@utility eyebrow {
+  @apply text-[11px] font-bold tracking-[0.08em] text-bean-600 uppercase;
 }
 @utility muted {
   @apply text-sm text-bean-600;
 }
 @utility badge {
-  @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium;
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+}
+/* Pill switch with one option picked, e.g. Upcoming | Past. */
+@utility seg {
+  @apply flex gap-1 rounded-2xl bg-surface p-1 text-sm font-semibold shadow-card;
+}
+@utility seg-item {
+  @apply rounded-xl px-3 py-2 text-center text-bean-600 transition;
+}
+@utility seg-on {
+  @apply bg-accent text-white shadow-[0_6px_16px_-6px_var(--color-accent)];
 }
 
 /* Numbers and prices always read left-to-right, also in Arabic */
@@ -64,4 +189,20 @@ body {
   direction: ltr;
   unicode-bidi: isolate;
   font-variant-numeric: tabular-nums;
+}
+
+/* Native form parts (date pickers, selects, checkboxes) follow the accent color. */
+:root {
+  accent-color: var(--color-accent);
+}
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237d8194' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 1.1rem;
+  background-position: right 0.8rem center;
+  padding-inline-end: 2.4rem;
+}
+[dir="rtl"] select.input {
+  background-position: left 0.8rem center;
 }

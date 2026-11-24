@@ -40,7 +40,7 @@ export default async function MenuPage() {
       {groups.size === 0 && <Empty>{t.none}</Empty>}
       {[...groups.entries()].map(([cat, rows]) => (
         <section key={cat} className="mb-5">
-          {cat && <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-bean-600">{cat}</h2>}
+          {cat && <h2 className="eyebrow mb-2.5 px-1">{cat}</h2>}
           <ul className="space-y-2">
             {rows.map((m) => {
               const c = costOf.get(m.id);

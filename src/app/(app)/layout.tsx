@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getAuth, getSession } from "@/lib/session";
 import BottomNav, { type NavItem } from "@/components/bottom-nav";
 import { Icon } from "@/components/icons";
+import { ThemeButton } from "@/components/theme";
+import Clock from "@/components/clock";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { supabase, userId } = await getAuth();
@@ -17,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: "/schedule", label: t.schedule, icon: "calendar" },
         { href: "/events", label: t.events, icon: "star" },
         { href: "/invoices", label: t.invoices, icon: "receipt" },
-        { href: "/menu", label: t.menu, icon: "cup" },
+        { href: "/menu", label: t.navCosts, icon: "cup" },
         { href: "/more", label: t.more, icon: "menu" },
       ]
     : [
@@ -29,25 +31,29 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       ];
 
   return (
-    <div className="pb-24">
-      <header className="sticky top-0 z-20 border-b border-bean-100 bg-bean-50/95 pt-[env(safe-area-inset-top)] backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-2 font-bold text-bean-800">
+    <div className="pb-28 md:pb-10">
+      <header className="sticky top-0 z-20 bg-page/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
+          <Link href="/" className="flex items-center gap-2.5 text-lg font-extrabold tracking-tight text-bean-900">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icon.svg" alt="" className="h-7 w-7" />
+            <img src="/icon.svg" alt="" className="h-9 w-9 rounded-xl bg-surface p-1 shadow-card" />
             {t.appName}
           </Link>
-          <Link href="/notifications" className="relative p-2 text-bean-700" aria-label={t.notifications}>
-            <Icon name="bell" className="h-6 w-6" />
-            {!!unread && (
-              <span className="absolute end-0 top-0 min-w-5 rounded-full bg-red-600 px-1 text-center text-[11px] leading-5 text-white">
-                {unread}
-              </span>
-            )}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Clock className="me-2 hidden text-3xl font-extrabold tracking-tight text-bean-900 md:inline" />
+            <ThemeButton label={t.switchTheme} />
+            <Link href="/notifications" className="icon-btn relative" aria-label={t.notifications}>
+              <Icon name="bell" className="h-5 w-5" />
+              {!!unread && (
+                <span className="absolute -end-1 -top-1 min-w-5 rounded-full bg-amber-700 px-1 text-center text-[11px] leading-5 font-bold text-white ring-2 ring-page">
+                  {unread}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-3xl px-4 py-4">{children}</main>
+      <main className="mx-auto max-w-4xl px-4 py-3">{children}</main>
       <BottomNav items={items} />
     </div>
   );

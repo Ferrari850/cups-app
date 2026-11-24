@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { setLocale } from "@/lib/actions";
+import { Icon } from "./icons";
 import type { Locale } from "@/lib/format";
 
 export default function LangToggle({ locale, label, className = "btn-secondary" }: { locale: Locale; label: string; className?: string }) {
@@ -13,7 +14,7 @@ export default function LangToggle({ locale, label, className = "btn-secondary" 
       disabled={pending}
       onClick={() => start(() => setLocale(locale === "ar" ? "en" : "ar"))}
     >
-      🌐 {label}
+      <Icon name="globe" className="h-4 w-4" /> {label}
     </button>
   );
 }
