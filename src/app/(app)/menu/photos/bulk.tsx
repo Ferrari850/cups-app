@@ -48,7 +48,10 @@ export default function BulkPhotos({ items, labels }: { items: Item[]; labels: L
     <div className="space-y-4">
       <p className="muted">{labels.hint}</p>
       <div className="card space-y-3">
-        <input type="file" accept="image/*" multiple onChange={(e) => setFiles([...(e.target.files ?? [])])} className="block w-full text-sm" aria-label={labels.pick} />
+        <label className="btn-primary flex w-full cursor-pointer items-center justify-center gap-2">
+          📷 {labels.pick}{files.length > 0 ? ` (${files.length})` : ""}
+          <input type="file" accept="image/*" multiple onChange={(e) => setFiles([...(e.target.files ?? [])])} className="sr-only" />
+        </label>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={replace} onChange={(e) => setReplace(e.target.checked)} /> {labels.replace}
         </label>
