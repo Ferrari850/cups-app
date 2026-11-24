@@ -3,12 +3,14 @@ import { getSession } from "@/lib/session";
 import { fmtDay, fmtTime, fmtDate, TZ } from "@/lib/format";
 import { Empty, Panel } from "@/components/ui";
 import { Icon, type IconName } from "@/components/icons";
+import ManagerDashboard from "./dashboard";
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ range?: string }> }) {
   const { supabase, profile, t, locale, isManager } = await getSession();
+  const sp = await searchParams;
   const now = new Date().toISOString();
 
-  const [{ data: shifts }, { data: myEvents }] = await Promise.all([
+  const [{ data: shifts }, { data: myEvents }] = isManager ? [{ data: [] }, { data: [] }] : await Promise.all([
     supabase
       .from("shifts")
       .select("id, starts_at, ends_at, station")
@@ -24,45 +26,20 @@ export default async function HomePage() {
       .limit(5),
   ]);
 
-  let counts = { swaps: 0, invoices: 0, alerts: 0 };
-  if (isManager) {
-    const [a, b, c] = await Promise.all([
-      supabase.from("swap_requests").select("id", { count: "exact", head: true }).eq("status", "pending_manager"),
-      supabase.from("invoices").select("id", { count: "exact", head: true }).eq("status", "review"),
-      supabase.from("price_alerts").select("id", { count: "exact", head: true }).is("dismissed_at", null),
-    ]);
-    counts = { swaps: a.count ?? 0, invoices: b.count ?? 0, alerts: c.count ?? 0 };
-  }
-
   type EventRow = { duty: string | null; events: { id: string; title: string; starts_at: string; location: string | null } };
   const events = ((myEvents ?? []) as unknown as EventRow[]).sort((x, y) => x.events.starts_at.localeCompare(y.events.starts_at));
 
   const hour = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: TZ }).format(new Date()));
   const greeting = hour < 5 ? t.goodEvening : hour < 12 ? t.goodMorning : hour < 18 ? t.goodAfternoon : t.goodEvening;
-  const waiting = counts.swaps + counts.invoices + counts.alerts;
 
-  const actions: { href: string; icon: IconName; title: string; sub?: string; n?: number }[] = isManager
-    ? [
-        { href: "/pos", icon: "cart", title: t.till, sub: t.newOrder },
-        { href: "/reports", icon: "chart", title: t.reports, sub: t.today },
-        { href: "/stock", icon: "box", title: t.stock, sub: t.lowStock },
-        { href: "/invoices/new", icon: "camera", title: t.scanInvoice, sub: t.invoices },
-        { href: "/schedule", icon: "calendar", title: t.addShift, sub: t.schedule },
-        { href: "/events/new", icon: "star", title: t.newEvent, sub: t.events },
-        { href: "/menu", icon: "cup", title: t.menu, sub: t.recipe },
-        { href: "/invoices", icon: "receipt", title: t.invoicesToReview, n: counts.invoices },
-        { href: "/swaps", icon: "swap", title: t.pendingSwaps, n: counts.swaps },
-        { href: "/alerts", icon: "alert", title: t.newPriceAlerts, n: counts.alerts },
-        { href: "/team", icon: "users", title: t.team, sub: t.more },
-      ]
-    : [
-        { href: "/pos", icon: "cart", title: t.till, sub: t.newOrder },
-        { href: "/bar", icon: "cup", title: t.barDisplay, sub: t.orders },
-        { href: "/schedule?view=mine", icon: "calendar", title: t.schedule, sub: t.myShifts },
-        { href: "/events", icon: "star", title: t.events, sub: t.upcoming },
-        { href: "/swaps", icon: "swap", title: t.swaps, sub: t.requestSwap },
-        { href: "/notifications", icon: "bell", title: t.notifications, sub: t.more },
-      ];
+  const actions: { href: string; icon: IconName; title: string; sub?: string; n?: number }[] = [
+    { href: "/pos", icon: "cart", title: t.till, sub: t.newOrder },
+    { href: "/bar", icon: "cup", title: t.barDisplay, sub: t.orders },
+    { href: "/schedule?view=mine", icon: "calendar", title: t.schedule, sub: t.myShifts },
+    { href: "/events", icon: "star", title: t.events, sub: t.upcoming },
+    { href: "/swaps", icon: "swap", title: t.swaps, sub: t.requestSwap },
+    { href: "/notifications", icon: "bell", title: t.notifications, sub: t.more },
+  ];
 
   return (
     <>
@@ -73,17 +50,11 @@ export default async function HomePage() {
           </h1>
           <p className="mt-0.5 text-sm text-bean-600">{fmtDate(new Date(), locale, { weekday: "long", year: "numeric" })}</p>
         </div>
-        {isManager && (
-          <Link
-            href={counts.swaps ? "/swaps" : counts.invoices ? "/invoices" : "/alerts"}
-            className={`badge px-3.5 py-2 text-sm ${waiting ? "bg-amber-100 text-amber-800" : "bg-surface text-bean-600 shadow-card"}`}
-          >
-            <span className={`h-2 w-2 rounded-full ${waiting ? "bg-amber-700" : "bg-green-700"}`} />
-            {waiting ? <><span className="num">{waiting}</span> {t.thingsNeedYou}</> : t.allClear}
-          </Link>
-        )}
       </div>
 
+      {isManager ? (
+        <ManagerDashboard supabase={supabase} t={t} locale={locale} range={sp.range === "7d" || sp.range === "month" ? sp.range : "today"} />
+      ) : (
       <div className="grid gap-4 md:grid-cols-2">
         <Panel title={t.quickActions} className="md:col-span-2">
           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
@@ -160,6 +131,7 @@ export default async function HomePage() {
           )}
         </Panel>
       </div>
+      )}
     </>
   );
 }
