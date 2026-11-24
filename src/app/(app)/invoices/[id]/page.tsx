@@ -11,15 +11,14 @@ import { Poller, RetryButton } from "./reading";
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, t, locale } = await requireManager();
-  const { data: inv } = await supabase.from("invoices").select("*").eq("id", id).single();
-  if (!inv) notFound();
-
-  const [{ data: lines }, { data: files }, { data: items }, { data: alerts }] = await Promise.all([
+  const [{ data: inv }, { data: lines }, { data: files }, { data: items }, { data: alerts }] = await Promise.all([
+    supabase.from("invoices").select("*").eq("id", id).single(),
     supabase.from("invoice_lines").select("*, items(name, name_ar, base_unit)").eq("invoice_id", id).order("line_no"),
     supabase.from("invoice_files").select("storage_path, mime_type, page_no").eq("invoice_id", id).order("page_no"),
     supabase.from("items").select("id, name, name_ar, base_unit").order("name"),
     supabase.from("price_alerts").select("item_id, change_pct").eq("invoice_id", id),
   ]);
+  if (!inv) notFound();
 
   const signed = files?.length
     ? (await supabase.storage.from("invoices").createSignedUrls(files.map((f) => f.storage_path), 3600)).data ?? []

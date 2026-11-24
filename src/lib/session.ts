@@ -22,19 +22,31 @@ export const getLocale = cache(async (): Promise<Locale> => {
   return c === "ar" ? "ar" : "en";
 });
 
+/**
+ * Supabase client and the signed-in user's id, checked once per request.
+ * getClaims() verifies the login token locally when the project uses signing keys,
+ * so it does not wait on a round trip to the Supabase auth server like getUser() does.
+ */
+export const getAuth = cache(async () => {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub;
+  if (!userId) redirect("/login");
+  return { supabase, userId };
+});
+
 /** Signed-in user, profile, language and dictionary. Redirects to /login when signed out. */
 export const getSession = cache(async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single<Profile>();
+  const { supabase, userId } = await getAuth();
+  const user = { id: userId };
+  const [{ data: profile }, locale] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", userId).single<Profile>(),
+    getLocale(),
+  ]);
   if (!profile || !profile.active) {
     await supabase.auth.signOut();
     redirect("/login");
   }
-  const locale = await getLocale();
   const isManager = profile.role === "owner" || profile.role === "manager";
   return { supabase, user, profile, locale, t: getDict(locale), isManager, isOwner: profile.role === "owner" };
 });

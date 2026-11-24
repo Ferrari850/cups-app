@@ -11,12 +11,11 @@ type Row = { staff_id: string; duty: string | null; seen_at: string | null; prof
 export default async function EventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, profile, t, locale, isManager } = await getSession();
-  const { data: ev } = await supabase.from("events").select("*").eq("id", id).single();
+  const [{ data: ev }, { data }] = await Promise.all([
+    supabase.from("events").select("*").eq("id", id).single(),
+    supabase.from("event_staff").select("staff_id, duty, seen_at, profiles(full_name, phone)").eq("event_id", id),
+  ]);
   if (!ev) notFound();
-  const { data } = await supabase
-    .from("event_staff")
-    .select("staff_id, duty, seen_at, profiles(full_name, phone)")
-    .eq("event_id", id);
   const staff = (data ?? []) as unknown as Row[];
   if (staff.some((s) => s.staff_id === profile.id && !s.seen_at)) {
     await supabase.rpc("mark_event_seen", { p_event: id });

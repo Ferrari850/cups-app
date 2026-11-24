@@ -12,14 +12,16 @@ type H = { id: string; unit_cost: number; invoice_unit_price: number | null; inv
 export default async function ItemPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, t, locale } = await requireManager();
-  const { data: item } = await supabase.from("items").select("*").eq("id", id).single();
+  const [{ data: item }, { data }] = await Promise.all([
+    supabase.from("items").select("*").eq("id", id).single(),
+    supabase
+      .from("price_history")
+      .select("id, unit_cost, invoice_unit_price, invoice_unit, recorded_on, invoice_id, suppliers(name)")
+      .eq("item_id", id)
+      .order("recorded_on", { ascending: false })
+      .limit(50),
+  ]);
   if (!item) notFound();
-  const { data } = await supabase
-    .from("price_history")
-    .select("id, unit_cost, invoice_unit_price, invoice_unit, recorded_on, invoice_id, suppliers(name)")
-    .eq("item_id", id)
-    .order("recorded_on", { ascending: false })
-    .limit(50);
   const history = (data ?? []) as unknown as H[];
   const mult = item.base_unit === "pcs" ? 1 : 1000;
   const per = item.base_unit === "pcs" ? t.unit_pcs : item.base_unit === "g" ? "kg" : "L";

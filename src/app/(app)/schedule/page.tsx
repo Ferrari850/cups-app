@@ -31,12 +31,13 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
     .lt("starts_at", dubaiInstant(addDays(week, 7), "00:00"))
     .order("starts_at");
   if (mine) q = q.eq("staff_id", profile.id);
-  const { data } = await q;
+  const [{ data }, { data: staff }] = await Promise.all([
+    q,
+    isManager
+      ? supabase.from("profiles").select("id, full_name").eq("active", true).order("full_name")
+      : Promise.resolve({ data: null }),
+  ]);
   const shifts = (data ?? []) as unknown as Shift[];
-
-  const { data: staff } = isManager
-    ? await supabase.from("profiles").select("id, full_name").eq("active", true).order("full_name")
-    : { data: null };
 
   const byDay = new Map<string, Shift[]>(days.map((d) => [d, []]));
   for (const s of shifts) byDay.get(dubaiDate(new Date(s.starts_at)))?.push(s);
