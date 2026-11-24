@@ -238,7 +238,7 @@ export default function Till({
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 min-[340px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {shown.map((it) => {
             const price = itemPrice(it, ch);
             const off = it.sold_out || price == null;
@@ -423,7 +423,7 @@ export default function Till({
 
       {/* Floating total on phones */}
       {lines.length > 0 && (
-        <a href="#order" className="fixed inset-x-3 bottom-3 z-30 flex items-center justify-between rounded-2xl bg-accent px-4 py-3 font-bold text-white shadow-float lg:hidden"
+        <a href="#order" className="fixed inset-x-[max(0.75rem,env(safe-area-inset-left))] bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 flex items-center justify-between rounded-2xl bg-accent px-4 py-3 font-bold text-white shadow-float lg:hidden"
           onClick={(e) => {
             e.preventDefault();
             document.querySelector("aside")?.scrollIntoView({ behavior: "smooth" });

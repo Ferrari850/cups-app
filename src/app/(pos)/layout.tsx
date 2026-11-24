@@ -12,7 +12,7 @@ export default async function PosLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-20 bg-page/90 pt-[env(safe-area-inset-top)] backdrop-blur-xl print:hidden">
-        <div className="flex items-center justify-between gap-2 px-3 py-2">
+        <div className="flex items-center justify-between gap-2 px-[max(0.75rem,env(safe-area-inset-left))] py-2">
           <div className="flex min-w-0 items-center gap-2">
             <Link href="/" className="icon-btn shrink-0" aria-label={t.home}>
               <Icon name="home" className="h-5 w-5" />
@@ -26,7 +26,7 @@ export default async function PosLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </header>
-      <main className="flex-1 px-3 pb-3">{children}</main>
+      <main className="flex-1 px-[max(0.75rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">{children}</main>
     </div>
   );
 }

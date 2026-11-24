@@ -3,14 +3,14 @@ import { Icon } from "./icons";
 
 export function PageHeader({ title, back, action }: { title: string; back?: string; action?: React.ReactNode }) {
   return (
-    <div className="mb-5 flex items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-3">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <div className="flex min-w-0 flex-1 basis-48 items-center gap-3">
         {back && (
           <Link href={back} className="icon-btn shrink-0" aria-label="back">
             <Icon name="chevron" className="h-5 w-5 rotate-180 rtl:rotate-0" />
           </Link>
         )}
-        <h1 className="h1">{title}</h1>
+        <h1 className="h1 min-w-0 break-words">{title}</h1>
       </div>
       {action}
     </div>

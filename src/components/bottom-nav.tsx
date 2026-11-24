@@ -10,7 +10,7 @@ export type NavItem = { href: string; label: string; icon: IconName; badge?: num
 export default function BottomNav({ items }: { items: NavItem[] }) {
   const path = usePathname();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <nav className="fixed inset-x-0 bottom-0 z-30 px-[max(0.75rem,env(safe-area-inset-left))] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <ul className="mx-auto flex max-w-xl gap-0.5 rounded-[28px] bg-surface/95 p-1.5 shadow-float ring-1 ring-bean-100 backdrop-blur-xl">
         {items.map((it) => {
           const active = it.href === "/" ? path === "/" : path.startsWith(it.href);
@@ -19,7 +19,7 @@ export default function BottomNav({ items }: { items: NavItem[] }) {
               <Link
                 href={it.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex flex-col items-center gap-0.5 rounded-[22px] px-0.5 py-2 text-[10.5px] tracking-tight font-semibold transition ${
+                className={`relative flex flex-col items-center gap-0.5 rounded-[22px] px-0.5 py-2 text-[clamp(9px,2.7vw,11px)] tracking-tight font-semibold transition ${
                   active ? "bg-accent-soft text-accent-ink" : "text-bean-500 hover:text-bean-800"
                 }`}
               >

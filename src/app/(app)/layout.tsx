@@ -31,9 +31,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       ];
 
   return (
-    <div className="pb-28 md:pb-10">
+    <div className="pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-10">
       <header className="sticky top-0 z-20 bg-page/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-safe py-3">
           <Link href="/" className="flex items-center gap-2.5 text-lg font-extrabold tracking-tight text-bean-900">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icon.svg" alt="" className="h-9 w-9 rounded-xl bg-surface p-1 shadow-card" />
@@ -53,7 +53,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-4xl px-4 py-3">{children}</main>
+      <main className="mx-auto max-w-4xl px-safe py-3">{children}</main>
       <BottomNav items={items} />
     </div>
   );

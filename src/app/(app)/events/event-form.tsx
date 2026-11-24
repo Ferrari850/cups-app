@@ -34,8 +34,8 @@ export default function EventForm({
           <label className="label">{t.eventTitle}</label>
           <input name="title" defaultValue={values.title} required className="input" />
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          <div className="col-span-3 sm:col-span-1">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="col-span-2 sm:col-span-1">
             <label className="label">{t.date}</label>
             <input type="date" name="date" defaultValue={values.date} required className="input num" />
           </div>
@@ -47,7 +47,7 @@ export default function EventForm({
             <label className="label">{t.end}</label>
             <input type="time" name="end" defaultValue={values.end} className="input num" />
           </div>
-          <div className="col-span-1">
+          <div className="col-span-2 sm:col-span-3">
             <label className="label">{t.guests}</label>
             <input type="number" name="guests" min={0} defaultValue={values.guests ?? ""} className="input num" />
           </div>

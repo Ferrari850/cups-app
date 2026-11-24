@@ -61,18 +61,18 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         <MenuPhoto id={id} url={m.image_url ?? null} labels={{ add: t.addPhoto, change: t.changePhoto, remove: t.delete, uploading: t.uploading }} />
       )}
 
-      <div className="card mb-5 grid grid-cols-3 gap-2 p-3">
+      <div className="card mb-5 grid grid-cols-3 gap-1.5 p-2 sm:gap-2 sm:p-3">
         <div className="tile">
           <div className="eyebrow truncate">{t.costPerPortion}</div>
-          <div className="num mt-1 text-xl font-extrabold tracking-tight">{fmtAED(cost, locale)}</div>
+          <div className="num mt-1 text-[clamp(0.8rem,3.6vw,1.25rem)] font-extrabold tracking-tight whitespace-nowrap">{fmtAED(cost, locale)}</div>
         </div>
         <div className="tile">
           <div className="eyebrow truncate">{t.margin}</div>
-          <div className="num mt-1 text-xl font-extrabold tracking-tight">{net != null && lines.length ? fmtAED(net - cost, locale) : "–"}</div>
+          <div className="num mt-1 text-[clamp(0.8rem,3.6vw,1.25rem)] font-extrabold tracking-tight whitespace-nowrap">{net != null && lines.length ? fmtAED(net - cost, locale) : "–"}</div>
         </div>
         <div className="tile">
           <div className="eyebrow truncate">{t.foodCost}</div>
-          <div className={`num mt-1 text-xl font-extrabold tracking-tight ${pctColor(pct)}`}>{pct != null ? `${pct.toFixed(1)}%` : "–"}</div>
+          <div className={`num mt-1 text-[clamp(0.8rem,3.6vw,1.25rem)] font-extrabold tracking-tight whitespace-nowrap ${pctColor(pct)}`}>{pct != null ? `${pct.toFixed(1)}%` : "–"}</div>
         </div>
         {missing && <p className="col-span-3 text-sm text-amber-800">⚠️ {t.missingPrices}</p>}
         {tooCostly && <p className="col-span-3 text-sm font-semibold text-red-700">⚠️ {t.recipeTooCostly}</p>}
