@@ -21,3 +21,10 @@ export async function changePassword(_: unknown, form: FormData) {
   const { error } = await supabase.auth.updateUser({ password });
   return { ok: !error, error: error?.message };
 }
+
+/** Managers: a 4-6 digit PIN that approves refunds on a cashier's tablet. */
+export async function setPin(_: unknown, form: FormData) {
+  const { supabase } = await getSession();
+  const { error } = await supabase.rpc("set_my_pin", { p_pin: normalizeDigits(String(form.get("pin") ?? "")) });
+  return { ok: !error, error: error?.message };
+}

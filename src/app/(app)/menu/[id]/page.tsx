@@ -7,7 +7,8 @@ import { PageHeader } from "@/components/ui";
 import SubmitButton from "@/components/submit-button";
 import { Icon } from "@/components/icons";
 import { VAT, costPct, pctColor } from "@/lib/costing";
-import { addRecipeLine, deleteMenuItem, deleteRecipeLine, updateMenuItem, updateRecipeLine } from "../actions";
+import { addRecipeLine, deleteMenuItem, deleteRecipeLine, setChannelPrices, setItemGroups, setMenuFlags, updateMenuItem, updateRecipeLine } from "../actions";
+import { channelPrice, suggestedPrice, type Channel } from "@/lib/pos";
 
 type Line = {
   id: string;
@@ -19,7 +20,7 @@ type Line = {
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { supabase, t, locale } = await requireManager();
-  const [{ data: m }, { data: lineData }, { data: items }] = await Promise.all([
+  const [{ data: m }, { data: lineData }, { data: items }, { data: channels }, { data: fixed }, { data: groups }, { data: links }, { data: settings }] = await Promise.all([
     supabase.from("menu_items").select("*").eq("id", id).single(),
     supabase
       .from("recipe_lines")
@@ -27,6 +28,12 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
       .eq("menu_item_id", id)
       .order("sort"),
     supabase.from("items").select("id, name, name_ar, base_unit, unit_cost").order("name"),
+    // POS tables; empty until the POS database update has run.
+    supabase.from("channels").select("*").eq("active", true).order("sort"),
+    supabase.from("channel_prices").select("channel_id, price").eq("menu_item_id", id),
+    supabase.from("modifier_groups").select("id, name, name_ar").order("sort").order("name"),
+    supabase.from("menu_item_modifier_groups").select("group_id").eq("menu_item_id", id),
+    supabase.from("cafe_settings").select("target_cost_pct").maybeSingle(),
   ]);
   if (!m) notFound();
   const lines = (lineData ?? []) as unknown as Line[];
@@ -39,6 +46,11 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   const missing = lines.some((l) => lineCost(l) == null);
   const pct = lines.length ? costPct(cost, m.selling_price) : null;
   const net = m.selling_price ? Number(m.selling_price) / (1 + VAT) : null;
+  const fixedBy = new Map((fixed ?? []).map((f) => [f.channel_id, Number(f.price)]));
+  const linked = new Set((links ?? []).map((l) => l.group_id));
+  const suggested = lines.length && !missing ? suggestedPrice(cost, Number(settings?.target_cost_pct ?? 30)) : null;
+  const tooCostly = pct != null && pct > 60;
+  const oddQty = (l: Line) => (l.items?.base_unit === "pcs" ? Number(l.quantity) > 10 : Number(l.quantity) > 1500);
   const unitLabel = (u?: string) => (u === "g" ? t.unit_g : u === "ml" ? t.unit_ml : t.unit_pcs);
 
   return (
@@ -59,6 +71,13 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
           <div className={`num mt-1 text-xl font-extrabold tracking-tight ${pctColor(pct)}`}>{pct != null ? `${pct.toFixed(1)}%` : "–"}</div>
         </div>
         {missing && <p className="col-span-3 text-sm text-amber-800">⚠️ {t.missingPrices}</p>}
+        {tooCostly && <p className="col-span-3 text-sm font-semibold text-red-700">⚠️ {t.recipeTooCostly}</p>}
+        {lines.some(oddQty) && <p className="col-span-3 text-sm font-semibold text-red-700">⚠️ {t.checkQuantities}</p>}
+        {suggested != null && (
+          <p className="muted col-span-3 num">
+            {t.suggestedPrice}: {fmtAED(suggested, locale)}
+          </p>
+        )}
         {net != null && (
           <p className="muted col-span-3 num">
             {t.priceExVat}: {fmtAED(net, locale)}
@@ -98,7 +117,10 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
           return (
             <li key={l.id} className="card">
               <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="font-medium">{l.items ? localName(l.items, locale) : "?"}</span>
+                <span className="font-medium">
+                  {l.items ? localName(l.items, locale) : "?"}
+                  {oddQty(l) && <span className="ms-1 text-red-700" title={t.checkQuantities}>⚠️</span>}
+                </span>
                 <span className="num font-semibold">{c != null ? fmtAED(c, locale, 3) : t.noPrice}</span>
               </div>
               <form action={updateRecipeLine} className="flex items-center gap-2">
@@ -116,6 +138,49 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
           );
         })}
       </ul>
+
+      {(channels ?? []).length > 0 && (
+        <section className="card mb-4 space-y-4">
+          <h2 className="eyebrow">{t.onTheTill}</h2>
+          <form action={setMenuFlags} className="flex flex-wrap items-center gap-4 text-sm">
+            <input type="hidden" name="id" value={id} />
+            <label className="flex items-center gap-1.5"><input type="checkbox" name="active" defaultChecked={m.active ?? true} /> {t.showOnTill}</label>
+            <label className="flex items-center gap-1.5"><input type="checkbox" name="sold_out" defaultChecked={m.sold_out ?? false} /> {t.soldOut}</label>
+            <SubmitButton className="btn-secondary btn-sm">{t.save}</SubmitButton>
+          </form>
+          <form action={setChannelPrices} className="space-y-2">
+            <input type="hidden" name="id" value={id} />
+            <div className="eyebrow">{t.channelPrices}</div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {((channels ?? []) as Channel[]).map((c) => {
+                const rule = channelPrice(m.selling_price == null ? null : Number(m.selling_price), c);
+                return (
+                  <label key={c.id} className="tile block">
+                    <span className="block text-xs font-semibold text-bean-600">{localName(c, locale)}</span>
+                    <input name={`p_${c.id}`} defaultValue={fixedBy.get(c.id) ?? ""} placeholder={rule != null ? rule.toFixed(2) : "–"} inputMode="decimal" className="input num mt-1 min-h-9" />
+                  </label>
+                );
+              })}
+            </div>
+            <p className="muted text-xs">{t.channelPriceHint}</p>
+            <SubmitButton className="btn-secondary btn-sm">{t.save}</SubmitButton>
+          </form>
+          {(groups ?? []).length > 0 && (
+            <form action={setItemGroups} className="space-y-2">
+              <input type="hidden" name="id" value={id} />
+              <div className="eyebrow">{t.addons}</div>
+              <div className="flex flex-wrap gap-3 text-sm">
+                {(groups ?? []).map((g) => (
+                  <label key={g.id} className="flex items-center gap-1.5">
+                    <input type="checkbox" name="group" value={g.id} defaultChecked={linked.has(g.id)} /> {localName(g, locale)}
+                  </label>
+                ))}
+              </div>
+              <SubmitButton className="btn-secondary btn-sm">{t.save}</SubmitButton>
+            </form>
+          )}
+        </section>
+      )}
 
       <details className="card">
         <summary className="cursor-pointer font-medium">{t.edit}</summary>

@@ -8,6 +8,17 @@ import { ThemePicker } from "@/components/theme";
 export default async function MorePage() {
   const { t, locale, isManager, profile } = await getSession();
   const links: { href: string; label: string; icon: IconName; show: boolean }[] = [
+    { href: "/pos", label: t.till, icon: "cart", show: true },
+    { href: "/bar", label: t.barDisplay, icon: "cup", show: true },
+    { href: "/orders", label: t.orders, icon: "receipt", show: true },
+    { href: "/drawer", label: t.drawer, icon: "cash", show: true },
+    { href: "/reports", label: t.reports, icon: "chart", show: isManager },
+    { href: "/stock", label: t.stock, icon: "box", show: isManager },
+    { href: "/prices", label: t.priceList, icon: "tag", show: isManager },
+    { href: "/channels", label: t.channels, icon: "swap", show: isManager },
+    { href: "/addons", label: t.addons, icon: "plus", show: isManager },
+    { href: "/settings", label: t.posSettings, icon: "gear", show: isManager },
+    { href: "/events", label: t.events, icon: "star", show: isManager },
     { href: "/swaps", label: t.swaps, icon: "swap", show: true },
     { href: "/notifications", label: t.notifications, icon: "bell", show: true },
     { href: "/items", label: t.items, icon: "box", show: isManager },

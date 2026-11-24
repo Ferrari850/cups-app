@@ -31,6 +31,17 @@ Roles: **owner** (everything, the only one who can make managers), **manager** (
 1. Sign in, open **More → Team**, and add your staff. Each person gets a temporary password to give them.
 2. Build the first week's schedule. Next week, use **Copy last week here**.
 
+### 4. Point of sale (POS)
+1. **Database update (once):** in Supabase **SQL Editor**, paste the whole of `supabase/migrations/0002_pos.sql` and press **Run**. It runs all or nothing.
+2. **More → Receipt & printer:** cafe name, address, TRN (receipts then print as Tax Invoice) and, once you have it, the Epson printer's IP address.
+3. **More → Prices per platform:** items without a menu price can't be sold. Type prices on each menu item, or use **Fill prices** (recipe cost ÷ 30%, plus VAT, rounded up to 0.50).
+4. **More → Channels & apps:** check each app's price multiplier, rounding and commission %.
+5. **More → Add-ons:** milk choices, extra shots, Extra Acai… link each to the stock item it uses.
+6. **Profile → Manager PIN:** managers set a PIN to approve refunds on a cashier's tablet.
+7. On the counter tablets open **/pos** (till) and **/bar** (bar display), and add both to the home screen.
+
+How it fits together: every sale is priced by the database from the menu and channel rule, takes stock out by recipe (and add-ons), and records cash, card or app payment against the open cash drawer. Confirmed invoices put stock in. Weekly counts and waste correct it.
+
 ## Development
 
 ```bash

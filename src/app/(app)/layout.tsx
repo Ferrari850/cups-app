@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     ? [
         { href: "/", label: t.home, icon: "home" },
         { href: "/schedule", label: t.schedule, icon: "calendar" },
-        { href: "/events", label: t.events, icon: "star" },
+        { href: "/pos", label: t.till, icon: "cart" },
         { href: "/invoices", label: t.invoices, icon: "receipt" },
         { href: "/menu", label: t.navCosts, icon: "cup" },
         { href: "/more", label: t.more, icon: "menu" },
@@ -26,7 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: "/", label: t.home, icon: "home" },
         { href: "/schedule", label: t.schedule, icon: "calendar" },
         { href: "/events", label: t.events, icon: "star" },
-        { href: "/swaps", label: t.swaps, icon: "swap" },
+        { href: "/pos", label: t.till, icon: "cart" },
         { href: "/more", label: t.more, icon: "menu" },
       ];
 
