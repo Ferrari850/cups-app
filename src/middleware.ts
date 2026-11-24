@@ -2,8 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/manifest.webmanifest", "/icon", "/apple-icon"];
+// Paths that never need a login check, so the middleware skips the auth call for them entirely.
+const STATIC_PATHS = ["/manifest.webmanifest", "/icon", "/apple-icon"];
 
 export async function middleware(request: NextRequest) {
+  if (STATIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p))) return NextResponse.next();
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -23,9 +26,9 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Verifies the login token (locally when Supabase signing keys are on) and refreshes it when it expires.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub;
 
   const path = request.nextUrl.pathname;
   if (!user && !PUBLIC_PATHS.some((p) => path.startsWith(p))) {

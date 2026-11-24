@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { getSession } from "@/lib/session";
+import { getAuth, getSession } from "@/lib/session";
 import BottomNav, { type NavItem } from "@/components/bottom-nav";
 import { Icon } from "@/components/icons";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { supabase, profile, t, isManager } = await getSession();
-  const { count: unread } = await supabase
-    .from("notifications")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", profile.id)
-    .is("read_at", null);
+  const { supabase, userId } = await getAuth();
+  // Load the profile and the unread count at the same time instead of one after the other.
+  const [{ t, isManager }, { count: unread }] = await Promise.all([
+    getSession(),
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", userId).is("read_at", null),
+  ]);
 
   const items: NavItem[] = isManager
     ? [
