@@ -21,6 +21,7 @@ export type PosItem = {
   category: string | null;
   selling_price: number | null;
   sold_out: boolean;
+  image_url: string | null;
   groups: string[];
   fixed: Record<string, number>; // channel id -> fixed price
 };

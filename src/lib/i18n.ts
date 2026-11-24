@@ -406,6 +406,17 @@ const en = {
   channelPriceHint: "Leave a box empty to use the channel rule (shown in grey).",
   pinHint: "4 to 6 digits. Lets you approve refunds on a cashier's tablet.",
   setPin: "Save PIN",
+  menuPhotos: "Photos",
+  menuPhotosHint: "Pick all your menu photos at once (e.g. the whole menu-photos folder). Each file is matched to the item with the same name, made smaller, and uploaded.",
+  pickPhotos: "Choose photos",
+  photosMatched: "match an item",
+  photosUnmatched: "no item with that name",
+  uploadPhotos: "Upload photos",
+  photosDone: "Uploaded",
+  itemsWithoutPhoto: "Items without a photo",
+  replaceExisting: "Also replace photos items already have",
+  addPhoto: "Add photo",
+  changePhoto: "Change photo",
 };
 
 export type Dict = typeof en;
@@ -801,6 +812,17 @@ const ar: Dict = {
   pinHint: "من ٤ إلى ٦ أرقام. للموافقة على الاسترداد من جهاز الكاشير.",
   setPin: "حفظ الرمز",
   barIncoming: "جديد",
+  menuPhotos: "الصور",
+  menuPhotosHint: "اختر كل صور القائمة مرة واحدة (مثل مجلد menu-photos كاملاً). تُطابق كل صورة مع الصنف بنفس الاسم وتُصغَّر وتُرفع.",
+  pickPhotos: "اختر الصور",
+  photosMatched: "تطابق صنفاً",
+  photosUnmatched: "لا يوجد صنف بهذا الاسم",
+  uploadPhotos: "رفع الصور",
+  photosDone: "تم الرفع",
+  itemsWithoutPhoto: "أصناف بلا صورة",
+  replaceExisting: "استبدال الصور الموجودة أيضاً",
+  addPhoto: "إضافة صورة",
+  changePhoto: "تغيير الصورة",
 };
 
 export const dictionaries: Record<Locale, Dict> = { en, ar };

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireManager } from "@/lib/session";
 import { fmtAED } from "@/lib/format";
 import { localName } from "@/lib/i18n";
@@ -5,13 +6,13 @@ import { Empty, PageHeader, RowLink } from "@/components/ui";
 import { createMenuItem } from "./actions";
 import { costPct, pctColor } from "@/lib/costing";
 
-type Row = { id: string; name: string; name_ar: string | null; category: string | null; selling_price: number | null };
+type Row = { id: string; name: string; name_ar: string | null; category: string | null; selling_price: number | null; image_url?: string | null };
 type C = { menu_item_id: string; portion_cost: number; missing_prices: number; ingredient_count: number };
 
 export default async function MenuPage() {
   const { supabase, t, locale } = await requireManager();
   const [{ data: menu }, { data: costs }] = await Promise.all([
-    supabase.from("menu_items").select("id, name, name_ar, category, selling_price").order("category").order("name"),
+    supabase.from("menu_items").select("*").order("category").order("name"),
     supabase.from("menu_item_costs").select("*"),
   ]);
   const costOf = new Map(((costs ?? []) as C[]).map((c) => [c.menu_item_id, c]));
@@ -23,7 +24,7 @@ export default async function MenuPage() {
 
   return (
     <>
-      <PageHeader title={t.menu} />
+      <PageHeader title={t.menu} action={<Link href="/menu/photos" className="btn-secondary btn-sm">📷 {t.menuPhotos}</Link>} />
       <details className="card mb-4">
         <summary className="cursor-pointer font-medium">+ {t.newMenuItem}</summary>
         <form action={createMenuItem} className="mt-3 space-y-2">
@@ -49,6 +50,14 @@ export default async function MenuPage() {
               return (
                 <li key={m.id}>
                   <RowLink href={`/menu/${m.id}`}>
+                    <div className="flex items-center gap-3">
+                    {m.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.image_url} alt="" loading="lazy" className="h-11 w-11 shrink-0 rounded-xl object-cover" />
+                    ) : (
+                      <span className="h-11 w-11 shrink-0 rounded-xl bg-bean-100" />
+                    )}
+                    <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="truncate font-medium">{localName(m, locale)}</span>
                       <span className={`num text-lg font-bold ${pctColor(p)}`}>{p != null ? `${p.toFixed(0)}%` : "–"}</span>
@@ -59,6 +68,8 @@ export default async function MenuPage() {
                         {!!c?.missing_prices && " ⚠️"}
                       </span>
                       <span>{fmtAED(m.selling_price, locale)}</span>
+                    </div>
+                    </div>
                     </div>
                   </RowLink>
                 </li>

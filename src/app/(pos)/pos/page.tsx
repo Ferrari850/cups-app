@@ -11,7 +11,7 @@ export default async function PosPage() {
     supabase.from("channels").select("*").eq("active", true).order("sort"),
     supabase
       .from("menu_items")
-      .select("id, name, name_ar, category, selling_price, sold_out, sort")
+      .select("*")
       .eq("active", true)
       .order("category")
       .order("sort")
@@ -39,6 +39,7 @@ export default async function PosPage() {
     category: m.category,
     selling_price: m.selling_price == null ? null : Number(m.selling_price),
     sold_out: m.sold_out,
+    image_url: m.image_url ?? null,
     groups: groupsBy.get(m.id) ?? [],
     fixed: fixedBy.get(m.id) ?? {},
   }));
