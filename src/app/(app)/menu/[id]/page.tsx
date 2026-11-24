@@ -9,6 +9,7 @@ import { Icon } from "@/components/icons";
 import { VAT, costPct, pctColor } from "@/lib/costing";
 import { addRecipeLine, deleteMenuItem, deleteRecipeLine, setChannelPrices, setItemGroups, setMenuFlags, updateMenuItem, updateRecipeLine } from "../actions";
 import { channelPrice, suggestedPrice, type Channel } from "@/lib/pos";
+import MenuPhoto from "./photo";
 
 type Line = {
   id: string;
@@ -56,6 +57,9 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   return (
     <>
       <PageHeader title={localName(m, locale)} back="/menu" />
+      {"image_url" in m && (
+        <MenuPhoto id={id} url={m.image_url ?? null} labels={{ add: t.addPhoto, change: t.changePhoto, remove: t.delete, uploading: t.uploading }} />
+      )}
 
       <div className="card mb-5 grid grid-cols-3 gap-2 p-3">
         <div className="tile">
