@@ -50,7 +50,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
         )}
       </div>
 
-      <h2 className="h2 mb-2">{t.priceHistory}</h2>
+      <h2 className="eyebrow mb-2.5 px-1">{t.priceHistory}</h2>
       <ul className="card mb-4 divide-y divide-bean-100 p-0">
         {history.map((h, i) => {
           const prev = history[i + 1];

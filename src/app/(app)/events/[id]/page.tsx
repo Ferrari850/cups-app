@@ -38,7 +38,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         {ev.guests != null && <div>👥 {ev.guests} {t.guests}</div>}
         {ev.description && <p className="whitespace-pre-wrap pt-2 text-bean-800">{ev.description}</p>}
       </div>
-      <h2 className="h2 mb-2">{t.assignedStaff}</h2>
+      <h2 className="eyebrow mb-2.5 px-1">{t.assignedStaff}</h2>
       <ul className="card divide-y divide-bean-100 p-0">
         {staff.map((s) => (
           <li key={s.staff_id} className="flex items-center justify-between px-4 py-3">

@@ -52,7 +52,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
       {inv.status === "reading" && (
         <div className="card flex flex-col items-center gap-4 py-10 text-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-bean-200 border-t-bean-700" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-bean-200 border-t-accent" />
           <p>{t.reading}</p>
           <Poller />
           <RetryButton id={id} label={t.tryAgain} subtle />

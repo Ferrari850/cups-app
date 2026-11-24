@@ -20,9 +20,9 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
         title={t.events}
         action={isManager && <Link href="/events/new" className="btn-primary btn-sm">+ {t.newEvent}</Link>}
       />
-      <div className="mb-4 flex rounded-xl bg-bean-100 p-1 text-sm">
-        <Link href="/events" className={`flex-1 rounded-lg py-1.5 text-center ${!past ? "bg-white shadow-sm" : ""}`}>{t.upcoming}</Link>
-        <Link href="/events?past=1" className={`flex-1 rounded-lg py-1.5 text-center ${past ? "bg-white shadow-sm" : ""}`}>{t.past}</Link>
+      <div className="seg mb-4">
+        <Link href="/events" className={`seg-item flex-1 ${!past ? "seg-on" : ""}`}>{t.upcoming}</Link>
+        <Link href="/events?past=1" className={`seg-item flex-1 ${past ? "seg-on" : ""}`}>{t.past}</Link>
       </div>
       <div>
         {events.length ? (
@@ -34,7 +34,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
                   <RowLink href={`/events/${e.id}`}>
                     <div className="flex items-center gap-2 font-semibold">
                       {e.title}
-                      {mine && <span className="badge bg-bean-700 text-white">★</span>}
+                      {mine && <span className="badge bg-accent text-white">★</span>}
                     </div>
                     <div className="muted">
                       {fmtDate(e.starts_at, locale, { weekday: "short" })} · <span className="num">{fmtTime(e.starts_at, locale)}</span>

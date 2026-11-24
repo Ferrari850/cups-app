@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { signOut } from "@/lib/actions";
 import { Icon, type IconName } from "@/components/icons";
 import LangToggle from "@/components/lang-toggle";
+import { ThemePicker } from "@/components/theme";
 
 export default async function MorePage() {
   const { t, locale, isManager, profile } = await getSession();
@@ -16,21 +17,32 @@ export default async function MorePage() {
   ];
   return (
     <>
-      <h1 className="h1 mb-1">{profile.full_name}</h1>
-      <p className="muted mb-4">{t[`role_${profile.role}`]}</p>
-      <ul className="card divide-y divide-bean-100 p-0">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-xl font-bold text-white">
+          {profile.full_name.trim().charAt(0).toUpperCase()}
+        </span>
+        <div className="min-w-0">
+          <h1 className="h1 truncate">{profile.full_name}</h1>
+          <p className="muted">{t[`role_${profile.role}`]}</p>
+        </div>
+      </div>
+      <ul className="card divide-y divide-bean-100 px-2 py-1">
         {links
           .filter((l) => l.show)
           .map((l) => (
             <li key={l.href}>
-              <Link href={l.href} className="flex items-center gap-3 px-4 py-3.5">
-                <Icon name={l.icon} className="h-5 w-5 text-bean-600" />
-                <span className="flex-1">{l.label}</span>
+              <Link href={l.href} className="flex items-center gap-3 px-2 py-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-bean-50 text-bean-700">
+                  <Icon name={l.icon} className="h-5 w-5" />
+                </span>
+                <span className="flex-1 font-medium">{l.label}</span>
                 <Icon name="chevron" className="h-4 w-4 text-bean-300 rtl:rotate-180" />
               </Link>
             </li>
           ))}
       </ul>
+      <h2 className="eyebrow mt-6 mb-2.5 px-1">{t.appearance}</h2>
+      <ThemePicker labels={{ system: t.themeSystem, light: t.themeLight, dark: t.themeDark }} />
       <div className="mt-6 flex gap-2">
         <LangToggle locale={locale} label={t.switchLang} className="btn-secondary flex-1" />
         <form action={signOut} className="flex-1">

@@ -45,18 +45,18 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
     <>
       <PageHeader title={localName(m, locale)} back="/menu" />
 
-      <div className="card mb-4 grid grid-cols-3 gap-2 text-center">
-        <div>
-          <div className="muted">{t.costPerPortion}</div>
-          <div className="num text-xl font-bold">{fmtAED(cost, locale)}</div>
+      <div className="card mb-5 grid grid-cols-3 gap-2 p-3">
+        <div className="tile">
+          <div className="eyebrow truncate">{t.costPerPortion}</div>
+          <div className="num mt-1 text-xl font-extrabold tracking-tight">{fmtAED(cost, locale)}</div>
         </div>
-        <div>
-          <div className="muted">{t.margin}</div>
-          <div className="num text-xl font-bold">{net != null && lines.length ? fmtAED(net - cost, locale) : "–"}</div>
+        <div className="tile">
+          <div className="eyebrow truncate">{t.margin}</div>
+          <div className="num mt-1 text-xl font-extrabold tracking-tight">{net != null && lines.length ? fmtAED(net - cost, locale) : "–"}</div>
         </div>
-        <div>
-          <div className="muted">{t.foodCost}</div>
-          <div className={`num text-xl font-bold ${pctColor(pct)}`}>{pct != null ? `${pct.toFixed(1)}%` : "–"}</div>
+        <div className="tile">
+          <div className="eyebrow truncate">{t.foodCost}</div>
+          <div className={`num mt-1 text-xl font-extrabold tracking-tight ${pctColor(pct)}`}>{pct != null ? `${pct.toFixed(1)}%` : "–"}</div>
         </div>
         {missing && <p className="col-span-3 text-sm text-amber-800">⚠️ {t.missingPrices}</p>}
         {net != null && (
@@ -66,11 +66,11 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         )}
       </div>
 
-      <h2 className="h2 mb-2">{t.recipe}</h2>
+      <h2 className="eyebrow mb-2.5 px-1">{t.recipe}</h2>
       {lines.length === 0 && <p className="muted mb-3">{t.recipeEmpty}</p>}
-      <form action={addRecipeLine} className="card mb-4 space-y-2 border-2 border-bean-300">
+      <form action={addRecipeLine} className="card mb-4 space-y-2 ring-2 ring-accent-soft">
         <input type="hidden" name="menu_item_id" value={id} />
-        <label className="label text-base font-semibold">+ {t.addIngredient}</label>
+        <label className="mb-1 block text-base font-bold">+ {t.addIngredient}</label>
         {(items ?? []).length === 0 && (
           <p className="text-sm text-amber-800">
             {t.noItemsYet}{" "}
