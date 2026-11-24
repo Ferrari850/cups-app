@@ -238,7 +238,7 @@ export default function Till({
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {shown.map((it) => {
             const price = itemPrice(it, ch);
             const off = it.sold_out || price == null;
@@ -248,17 +248,17 @@ export default function Till({
                 type="button"
                 onClick={() => tapItem(it)}
                 disabled={pending && soldOutMode}
-                className={`flex min-h-24 flex-col justify-between overflow-hidden rounded-2xl text-start shadow-card transition active:scale-[.97] ${
+                className={`flex min-h-20 flex-col justify-between overflow-hidden rounded-xl text-start shadow-card transition active:scale-[.97] ${
                   off ? "bg-bean-100 text-bean-500" : "bg-surface"
-                } ${soldOutMode ? "ring-2 ring-red-300" : ""} ${it.image_url ? "pb-3" : "p-3"}`}
+                } ${soldOutMode ? "ring-2 ring-red-300" : ""} ${it.image_url ? "pb-2" : "p-2"}`}
               >
                 {it.image_url && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={it.image_url} alt="" loading="lazy" className={`mb-2 aspect-[4/3] w-full object-cover ${off ? "opacity-40 grayscale" : ""}`} />
+                  <img src={it.image_url} alt="" loading="lazy" className={`mb-1.5 aspect-square w-full object-cover ${off ? "opacity-40 grayscale" : ""}`} />
                 )}
-                <span className={`line-clamp-2 font-bold leading-tight ${it.image_url ? "px-3" : ""}`}>{nm(it, locale)}</span>
-                <span className={`mt-2 flex items-end justify-between gap-1 ${it.image_url ? "px-3" : ""}`}>
-                  <span className="num font-extrabold text-accent-ink">{price != null ? fmtAED(price, locale) : t.noPriceSet}</span>
+                <span className={`line-clamp-2 text-sm font-bold leading-tight ${it.image_url ? "px-2" : ""}`}>{nm(it, locale)}</span>
+                <span className={`mt-1 flex items-end justify-between gap-1 ${it.image_url ? "px-2" : ""}`}>
+                  <span className="num text-sm font-extrabold text-accent-ink">{price != null ? fmtAED(price, locale) : t.noPriceSet}</span>
                   {it.sold_out && <span className="badge bg-red-100 text-red-800">{t.soldOut}</span>}
                   {!it.sold_out && it.groups.length > 0 && <span className="text-xs text-bean-500">+</span>}
                 </span>
