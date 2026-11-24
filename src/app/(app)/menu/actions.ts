@@ -80,3 +80,46 @@ export async function deleteRecipeLine(form: FormData) {
   revalidatePath(`/menu/${menuId}`);
   revalidatePath("/menu");
 }
+
+export async function setMenuFlags(form: FormData) {
+  const { supabase } = await requireManager();
+  const id = String(form.get("id"));
+  await supabase
+    .from("menu_items")
+    .update({ active: form.get("active") === "on", sold_out: form.get("sold_out") === "on" })
+    .eq("id", id);
+  revalidatePath(`/menu/${id}`);
+  revalidatePath("/menu");
+  revalidatePath("/pos");
+}
+
+export async function setItemGroups(form: FormData) {
+  const { supabase } = await requireManager();
+  const id = String(form.get("id"));
+  const groups = form.getAll("group").map(String);
+  await supabase.from("menu_item_modifier_groups").delete().eq("menu_item_id", id);
+  if (groups.length) {
+    await supabase.from("menu_item_modifier_groups").insert(groups.map((group_id) => ({ menu_item_id: id, group_id })));
+  }
+  revalidatePath(`/menu/${id}`);
+  revalidatePath("/pos");
+}
+
+/** Fixed price per channel; an empty box goes back to the channel's rule. */
+export async function setChannelPrices(form: FormData) {
+  const { supabase } = await requireManager();
+  const id = String(form.get("id"));
+  const set: { menu_item_id: string; channel_id: string; price: number }[] = [];
+  const clear: string[] = [];
+  for (const [k, v] of form.entries()) {
+    if (!k.startsWith("p_")) continue;
+    const price = n(v);
+    if (price == null || price < 0) clear.push(k.slice(2));
+    else set.push({ menu_item_id: id, channel_id: k.slice(2), price });
+  }
+  if (clear.length) await supabase.from("channel_prices").delete().eq("menu_item_id", id).in("channel_id", clear);
+  if (set.length) await supabase.from("channel_prices").upsert(set);
+  revalidatePath(`/menu/${id}`);
+  revalidatePath("/prices");
+  revalidatePath("/pos");
+}

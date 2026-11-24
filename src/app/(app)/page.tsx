@@ -43,6 +43,9 @@ export default async function HomePage() {
 
   const actions: { href: string; icon: IconName; title: string; sub?: string; n?: number }[] = isManager
     ? [
+        { href: "/pos", icon: "cart", title: t.till, sub: t.newOrder },
+        { href: "/reports", icon: "chart", title: t.reports, sub: t.today },
+        { href: "/stock", icon: "box", title: t.stock, sub: t.lowStock },
         { href: "/invoices/new", icon: "camera", title: t.scanInvoice, sub: t.invoices },
         { href: "/schedule", icon: "calendar", title: t.addShift, sub: t.schedule },
         { href: "/events/new", icon: "star", title: t.newEvent, sub: t.events },
@@ -53,6 +56,8 @@ export default async function HomePage() {
         { href: "/team", icon: "users", title: t.team, sub: t.more },
       ]
     : [
+        { href: "/pos", icon: "cart", title: t.till, sub: t.newOrder },
+        { href: "/bar", icon: "cup", title: t.barDisplay, sub: t.orders },
         { href: "/schedule?view=mine", icon: "calendar", title: t.schedule, sub: t.myShifts },
         { href: "/events", icon: "star", title: t.events, sub: t.upcoming },
         { href: "/swaps", icon: "swap", title: t.swaps, sub: t.requestSwap },
