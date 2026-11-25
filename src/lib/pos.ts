@@ -48,6 +48,8 @@ export type Settings = {
   printer_ip: string | null;
   target_cost_pct: number;
   margin_alert_pct: number;
+  draw_enabled?: boolean;
+  draw_min_total?: number;
 };
 
 export function channelPrice(base: number | null | undefined, ch: Pick<Channel, "price_multiplier" | "round_to">) {

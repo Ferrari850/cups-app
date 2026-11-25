@@ -18,6 +18,7 @@ export default async function MorePage() {
     { href: "/channels", label: t.channels, icon: "swap", show: isManager },
     { href: "/addons", label: t.addons, icon: "plus", show: isManager },
     { href: "/settings", label: t.posSettings, icon: "gear", show: isManager },
+    { href: "/draw", label: t.prizeDraw, icon: "gift", show: isManager },
     { href: "/events", label: t.events, icon: "star", show: isManager },
     { href: "/swaps", label: t.swaps, icon: "swap", show: true },
     { href: "/notifications", label: t.notifications, icon: "bell", show: true },

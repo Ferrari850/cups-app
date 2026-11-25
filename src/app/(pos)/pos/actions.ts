@@ -49,3 +49,12 @@ export async function setSoldOut(id: string, soldOut: boolean) {
   await supabase.from("menu_items").update({ sold_out: soldOut }).eq("id", id);
   revalidatePath("/pos");
 }
+
+/** Prize draw: the customer chose to give their name and phone for this paid order. */
+export async function enterDraw(orderId: string, name: string, phone: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { supabase } = await getSession();
+  const { error } = await supabase.rpc("enter_draw", { p_order: orderId, p_name: name, p_phone: phone });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/draw");
+  return { ok: true };
+}

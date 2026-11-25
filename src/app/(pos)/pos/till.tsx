@@ -8,7 +8,7 @@ import { fmtAED } from "@/lib/format";
 import { channelPrice, itemPrice, type Channel, type ModGroup, type PosItem, type Settings } from "@/lib/pos";
 import { eposPrint } from "@/lib/epos";
 import { Icon } from "@/components/icons";
-import { lookupPlate, placeOrder, setSoldOut, type PastOrder, type PlacedOrder } from "./actions";
+import { enterDraw, lookupPlate, placeOrder, setSoldOut, type PastOrder, type PlacedOrder } from "./actions";
 import { getPrintJob } from "../receipt/actions";
 
 type Line = { key: string; itemId: string; options: string[]; qty: number; note: string };
@@ -561,6 +561,16 @@ export default function Till({
             )}
             {printMsg && <p className="muted mt-2">{printMsg}</p>}
           </div>
+          {settings?.draw_enabled && !ch.is_app && done.order.total > Number(settings.draw_min_total ?? 50) && (
+            <DrawEntry
+              key={done.order.id}
+              t={t}
+              orderId={done.order.id}
+              minTotal={Number(settings.draw_min_total ?? 50)}
+              locale={locale}
+              initial={{ name: cust.customer_name, phone: cust.customer_phone }}
+            />
+          )}
           <div className="mt-4 grid grid-cols-2 gap-2">
             <a href={`/receipt/${done.order.id}?print=1`} target="_blank" className="btn-secondary py-3">
               {t.printReceipt}
@@ -576,6 +586,63 @@ export default function Till({
           )}
         </Sheet>
       )}
+    </div>
+  );
+}
+
+/** Optional: the customer gives a name and phone to enter the prize draw. Skipping is just "New order". */
+function DrawEntry({ t, orderId, minTotal, locale, initial }: { t: Dict; orderId: string; minTotal: number; locale: Locale; initial: { name: string; phone: string } }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(initial.name);
+  const [phone, setPhone] = useState(initial.phone);
+  const [state, setState] = useState<"idle" | "saving" | "done">("idle");
+  const [err, setErr] = useState<string | null>(null);
+
+  if (state === "done") {
+    return <p className="mt-4 rounded-2xl bg-green-50 px-3 py-3 text-center font-bold text-green-800">✓ {t.drawEntered}</p>;
+  }
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="mt-4 flex w-full items-center gap-3 rounded-2xl bg-accent-soft px-3 py-3 text-start">
+        <Icon name="gift" className="h-6 w-6 shrink-0 text-accent-ink" />
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold">{t.drawOffer}</span>
+          <span className="block text-xs text-bean-600">{t.drawOfferHint.replace("{min}", fmtAED(minTotal, locale))}</span>
+        </span>
+      </button>
+    );
+  }
+  async function submit() {
+    setErr(null);
+    setState("saving");
+    const res = await enterDraw(orderId, name, phone);
+    if (res.ok) return setState("done");
+    setState("idle");
+    const m = res.error;
+    setErr(
+      m.includes("draw_bad_phone") ? t.drawBadPhone
+      : m.includes("draw_bad_name") ? t.drawBadName
+      : m.includes("draw_already") ? t.drawAlready
+      : `${t.error}: ${m}`,
+    );
+  }
+  return (
+    <div className="mt-4 space-y-2 rounded-2xl bg-bean-50 p-3">
+      <div className="flex items-center gap-2 font-bold">
+        <Icon name="gift" className="h-5 w-5 text-accent-ink" /> {t.prizeDraw}
+      </div>
+      <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.customerName} className="input" autoFocus />
+      <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05X XXX XXXX" type="tel" inputMode="tel" dir="ltr" className="input num" />
+      <p className="text-xs text-bean-600">{t.drawPrivacy}</p>
+      {err && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{err}</p>}
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" className="btn-secondary" onClick={() => setOpen(false)}>
+          {t.drawSkip}
+        </button>
+        <button type="button" className="btn-primary" disabled={state === "saving" || !name.trim() || !phone.trim()} onClick={submit}>
+          {state === "saving" ? t.saving : t.drawEnter}
+        </button>
+      </div>
     </div>
   );
 }
