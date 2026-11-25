@@ -23,6 +23,8 @@ export async function saveSettings(form: FormData) {
       printer_ip: s("printer_ip"),
       target_cost_pct: n("target_cost_pct", 30),
       margin_alert_pct: n("margin_alert_pct", 35),
+      // Only sent once the prize draw columns exist (migration 0004).
+      ...(form.has("draw_min_total") ? { draw_enabled: form.get("draw_enabled") === "on", draw_min_total: n("draw_min_total", 50) } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", true);
