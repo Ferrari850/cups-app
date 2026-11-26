@@ -51,7 +51,12 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
           <div className="num">{[o.car_plate, o.car_color, o.parking_spot && `Spot ${o.parking_spot}`].filter(Boolean).join(" · ")}</div>
         )}
         {o.external_ref && <div className="num">Ref {o.external_ref}</div>}
-        {o.customer_name && <div>{o.customer_name}</div>}
+        {(o.customer_name || o.customer_phone) && (
+          <div className="flex justify-between gap-2">
+            <span>{o.customer_name}</span>
+            {o.customer_phone && <span className="num" dir="ltr">{o.customer_phone}</span>}
+          </div>
+        )}
         <hr className="my-2 border-dashed border-black" />
         <table className="w-full">
           <tbody>
@@ -82,6 +87,14 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
         {o.payments.map((p, i) => (
           <Row key={i} l={p.amount < 0 ? `Refund ${p.method}` : p.method === "cash" ? "Cash · نقداً" : p.method === "card" ? "Card · بطاقة" : `${o.channels?.name ?? "App"}`} r={Number(p.amount).toFixed(2)} />
         ))}
+        {o.in_draw && (
+          <div className="mt-3 border-2 border-black p-2 text-center">
+            <div className="font-bold">PRIZE DRAW ENTRY · مشارك في السحب</div>
+            <div>We will call you if you win · سنتصل بك إذا فزت</div>
+            {o.customer_name && <div className="mt-1 font-bold">{o.customer_name}</div>}
+            {o.customer_phone && <div className="num text-base font-bold" dir="ltr">{o.customer_phone}</div>}
+          </div>
+        )}
         {(st?.receipt_footer || st?.receipt_footer_ar) && (
           <footer className="mt-3 text-center">
             {st?.receipt_footer && <div>{st.receipt_footer}</div>}

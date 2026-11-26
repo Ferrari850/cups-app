@@ -16,6 +16,7 @@ export type ReceiptOrder = {
   parking_spot: string | null;
   customer_name: string | null;
   customer_phone: string | null;
+  in_draw?: boolean; // after migration 0004
   external_ref: string | null;
   notes: string | null;
   staff_id: string | null;
@@ -36,7 +37,7 @@ export type ReceiptOrder = {
 };
 
 export const RECEIPT_SELECT =
-  "id, invoice_no, ticket_no, created_at, status, total, vat, refunded, refund_reason, car_plate, car_color, parking_spot, customer_name, customer_phone, external_ref, notes, staff_id, channels(name, name_ar, code), order_lines(id, name, name_ar, qty, unit_price, line_total, unit_cost, note, sort, modifiers), payments(method, amount, created_at)";
+  "*, channels(name, name_ar, code), order_lines(id, name, name_ar, qty, unit_price, line_total, unit_cost, note, sort, modifiers), payments(method, amount, created_at)";
 
 const money = (n: number) => Number(n).toFixed(2);
 
@@ -69,6 +70,8 @@ export function toTicket(o: ReceiptOrder, s: Settings | null): Ticket {
     vat: money(o.vat),
     net: money(Number(o.total) - Number(o.vat)),
     payments: o.payments.map((p) => ({ label: p.method.toUpperCase(), amount: money(p.amount) })),
+    customer: [o.customer_name, o.customer_phone].filter(Boolean).join("  ") || null,
+    draw: !!o.in_draw,
     footer: s?.receipt_footer,
   };
 }

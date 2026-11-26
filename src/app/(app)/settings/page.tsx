@@ -45,6 +45,15 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
             <F k="margin_alert_pct" label={t.marginAlertPct} mode="decimal" />
           </div>
         </section>
+        {s.draw_enabled !== undefined && (
+          <section className="card space-y-3">
+            <h2 className="eyebrow">{t.prizeDraw}</h2>
+            <label className="flex items-center gap-2 text-sm font-medium">
+              <input type="checkbox" name="draw_enabled" defaultChecked={s.draw_enabled} /> {t.drawEnabled}
+            </label>
+            <F k="draw_min_total" label={t.drawMinTotal} mode="decimal" />
+          </section>
+        )}
         <section className="card space-y-3">
           <h2 className="eyebrow">{t.wifiPrinter}</h2>
           <F k="printer_ip" label={t.printerIp} dir="ltr" />
