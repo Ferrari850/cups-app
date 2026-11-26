@@ -39,6 +39,16 @@ export default function Till({
   const [channelId, setChannelId] = useState(channels[0]?.id ?? "");
   const ch = channels.find((c) => c.id === channelId) ?? channels[0];
   const [cat, setCat] = useState<string>("");
+  // Phones: hide the floating order bar once the order panel is on screen, so it never covers the pay buttons.
+  const orderRef = useRef<HTMLElement>(null);
+  const [orderInView, setOrderInView] = useState(false);
+  useEffect(() => {
+    const el = orderRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([e]) => setOrderInView(e.isIntersecting), { threshold: 0.05 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   const [q, setQ] = useState("");
   const [lines, setLines] = useState<Line[]>([]);
   const [picking, setPicking] = useState<{ item: PosItem; options: string[]; editKey?: string } | null>(null);
@@ -282,7 +292,7 @@ export default function Till({
       </section>
 
       {/* Order side */}
-      <aside className="lg:sticky lg:top-16 lg:self-start">
+      <aside ref={orderRef} id="order" className="scroll-mt-20 pb-24 lg:sticky lg:top-16 lg:self-start lg:pb-0">
         <div className="card space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="h2">{t.order} · {nm(ch, locale)}</h2>
@@ -435,7 +445,7 @@ export default function Till({
       </aside>
 
       {/* Floating total on phones */}
-      {lines.length > 0 && (
+      {lines.length > 0 && !orderInView && (
         <a href="#order" className="fixed inset-x-[max(0.75rem,env(safe-area-inset-left))] bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 flex items-center justify-between rounded-2xl bg-accent px-4 py-3 font-bold text-white shadow-float lg:hidden"
           onClick={(e) => {
             e.preventDefault();
