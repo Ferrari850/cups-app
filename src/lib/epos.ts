@@ -23,6 +23,8 @@ export type Ticket = {
   vat: string;
   net: string;
   payments: { label: string; amount: string }[];
+  customer?: string | null;
+  draw?: boolean; // entered in the prize draw: print a box with the phone to call
   footer?: string | null;
 };
 
@@ -56,6 +58,7 @@ export function ticketXml(tk: Ticket) {
     '<text align="left"/>',
     t(row(tk.invoice, tk.date)),
     t(row(tk.channel, tk.car ? latin(tk.car) : "")),
+    tk.customer ? t(latin(tk.customer)) : "",
     t("-".repeat(W)),
   ];
   for (const l of tk.lines) {
@@ -71,6 +74,9 @@ export function ticketXml(tk: Ticket) {
     t(row("Net (excl. VAT)", tk.net)),
     t(row("VAT 5%", tk.vat)),
     ...tk.payments.map((p) => t(row(p.label, p.amount))),
+    ...(tk.draw
+      ? ['<feed line="1"/>', '<text align="center"/>', t("*".repeat(W)), t("PRIZE DRAW ENTRY"), t("We will call this number if you win:"), tk.customer ? t(latin(tk.customer)) : "", t("*".repeat(W)), '<text align="left"/>']
+      : []),
     '<feed line="1"/>',
     '<text align="center"/>',
     tk.footer ? t(latin(tk.footer)) : "",
