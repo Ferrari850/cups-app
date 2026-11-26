@@ -7,6 +7,8 @@ begin;
 
 alter table public.cafe_settings add column if not exists draw_enabled boolean not null default true;
 alter table public.cafe_settings add column if not exists draw_min_total numeric(10, 2) not null default 50;
+-- So the receipt (which every cashier can print) can show the draw entry and the phone to call.
+alter table public.orders add column if not exists in_draw boolean not null default false;
 
 create table if not exists public.prize_draws (
   id uuid primary key default gen_random_uuid(),
@@ -66,6 +68,11 @@ begin
   if exists (select 1 from public.draw_entries where order_id = o.id) then raise exception 'draw_already'; end if;
   insert into public.draw_entries (order_id, customer_name, phone, business_date, created_by)
   values (o.id, left(v_name, 80), v_phone, o.business_date, auth.uid());
+  -- Printed on the receipt, so the cafe can call the customer if they win.
+  update public.orders set in_draw = true,
+    customer_name = coalesce(customer_name, left(v_name, 80)),
+    customer_phone = v_phone
+  where id = o.id;
 end $$;
 
 /** Owner or manager picks one random entry between two dates (each invoice is one chance). */
@@ -95,6 +102,20 @@ begin
   update public.draw_entries set won_draw_id = d.id where id = e.id;
   return d;
 end $$;
+
+/** Deleting entries after a draw also clears the phone kept on the order for the receipt. */
+create or replace function public.forget_draw_phone()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  update public.orders set customer_phone = null, in_draw = false
+  where id = old.order_id and in_draw;
+  return old;
+end $$;
+drop trigger if exists draw_entries_forget on public.draw_entries;
+create trigger draw_entries_forget after delete on public.draw_entries
+  for each row execute function public.forget_draw_phone();
 
 revoke all on function public.enter_draw(uuid, text, text) from public, anon;
 revoke all on function public.pick_draw_winner(date, date) from public, anon;

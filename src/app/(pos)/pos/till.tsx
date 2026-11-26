@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import type { Dict } from "@/lib/i18n";
 import type { Locale } from "@/lib/format";
@@ -54,6 +54,11 @@ export default function Till({
   const [soldOutMode, setSoldOutMode] = useState(false);
   const [online, setOnline] = useState(true);
   const [pending, start] = useTransition();
+  // When the order can go in the prize draw, the Wi-Fi receipt waits until the cashier
+  // enters or skips the draw, so the printed receipt shows the entry and the phone.
+  const heldPrint = useRef<string | null>(null);
+  const drawMin = Number(settings?.draw_min_total ?? 50);
+  const drawOn = !!settings?.draw_enabled && !ch?.is_app;
 
   const byId = useMemo(() => new Map(items.map((i) => [i.id, i])), [items]);
   const optById = useMemo(() => {
@@ -120,7 +125,14 @@ export default function Till({
     else addLine(it.id, []);
   }
 
+  function releasePrint() {
+    const id = heldPrint.current;
+    heldPrint.current = null;
+    if (id) wifiPrint(id).catch(() => setPrintMsg(t.printFailed));
+  }
+
   function reset() {
+    releasePrint();
     setLines([]);
     setCar({ car_plate: "", car_color: "", parking_spot: "" });
     setCust({ customer_name: "", customer_phone: "", external_ref: "", notes: "" });
@@ -176,7 +188,8 @@ export default function Till({
       }
       setPaying(null);
       setDone({ order: res.order, change });
-      wifiPrint(res.order.id).catch(() => setPrintMsg(t.printFailed));
+      if (drawOn && res.order.total > drawMin) heldPrint.current = res.order.id;
+      else wifiPrint(res.order.id).catch(() => setPrintMsg(t.printFailed));
     });
   }
 
@@ -561,12 +574,13 @@ export default function Till({
             )}
             {printMsg && <p className="muted mt-2">{printMsg}</p>}
           </div>
-          {settings?.draw_enabled && !ch.is_app && done.order.total > Number(settings.draw_min_total ?? 50) && (
+          {drawOn && done.order.total > drawMin && (
             <DrawEntry
               key={done.order.id}
               t={t}
               orderId={done.order.id}
-              minTotal={Number(settings.draw_min_total ?? 50)}
+              minTotal={drawMin}
+              onEntered={releasePrint}
               locale={locale}
               initial={{ name: cust.customer_name, phone: cust.customer_phone }}
             />
@@ -591,7 +605,7 @@ export default function Till({
 }
 
 /** Optional: the customer gives a name and phone to enter the prize draw. Skipping is just "New order". */
-function DrawEntry({ t, orderId, minTotal, locale, initial }: { t: Dict; orderId: string; minTotal: number; locale: Locale; initial: { name: string; phone: string } }) {
+function DrawEntry({ t, orderId, minTotal, locale, initial, onEntered }: { t: Dict; orderId: string; minTotal: number; locale: Locale; initial: { name: string; phone: string }; onEntered: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(initial.name);
   const [phone, setPhone] = useState(initial.phone);
@@ -616,7 +630,11 @@ function DrawEntry({ t, orderId, minTotal, locale, initial }: { t: Dict; orderId
     setErr(null);
     setState("saving");
     const res = await enterDraw(orderId, name, phone);
-    if (res.ok) return setState("done");
+    if (res.ok) {
+      setState("done");
+      onEntered();
+      return;
+    }
     setState("idle");
     const m = res.error;
     setErr(
