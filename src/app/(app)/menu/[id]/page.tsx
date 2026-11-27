@@ -201,6 +201,15 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
               <span className="muted text-xs">{t.sellingPrice}</span>
             </div>
           </div>
+          {"station" in m && (
+            <label className="flex items-center gap-2 text-sm">
+              {t.madeAt}
+              <select name="station" defaultValue={m.station} className="input min-h-9 w-auto">
+                <option value="bar">☕ {t.stationBar}</option>
+                <option value="kitchen">🍳 {t.stationKitchen}</option>
+              </select>
+            </label>
+          )}
           <div className="flex items-center gap-2 text-sm">
             {t.makes}
             <input name="yield_portions" defaultValue={m.yield_portions} inputMode="decimal" className="input num min-h-9 w-20" />

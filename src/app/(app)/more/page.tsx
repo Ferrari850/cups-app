@@ -10,6 +10,7 @@ export default async function MorePage() {
   const links: { href: string; label: string; icon: IconName; show: boolean }[] = [
     { href: "/pos", label: t.till, icon: "cart", show: true },
     { href: "/bar", label: t.barDisplay, icon: "cup", show: true },
+    { href: "/kitchen", label: t.kitchenDisplay, icon: "cup", show: true },
     { href: "/orders", label: t.orders, icon: "receipt", show: true },
     { href: "/drawer", label: t.drawer, icon: "cash", show: true },
     { href: "/finance", label: t.finance, icon: "cash", show: isManager },
@@ -18,6 +19,7 @@ export default async function MorePage() {
     { href: "/prices", label: t.priceList, icon: "tag", show: isManager },
     { href: "/channels", label: t.channels, icon: "swap", show: isManager },
     { href: "/addons", label: t.addons, icon: "plus", show: isManager },
+    { href: "/stations", label: t.stations, icon: "gear", show: isManager },
     { href: "/settings", label: t.posSettings, icon: "gear", show: isManager },
     { href: "/draw", label: t.prizeDraw, icon: "gift", show: isManager },
     { href: "/events", label: t.events, icon: "star", show: isManager },

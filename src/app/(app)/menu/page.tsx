@@ -24,7 +24,15 @@ export default async function MenuPage() {
 
   return (
     <>
-      <PageHeader title={t.menu} action={<Link href="/menu/photos" className="btn-secondary btn-sm">📷 {t.menuPhotos}</Link>} />
+      <PageHeader
+        title={t.menu}
+        action={
+          <div className="flex gap-2">
+            <Link href="/stations" className="btn-secondary btn-sm">🍳 {t.stations}</Link>
+            <Link href="/menu/photos" className="btn-secondary btn-sm">📷 {t.menuPhotos}</Link>
+          </div>
+        }
+      />
       <details className="card mb-4">
         <summary className="cursor-pointer font-medium">+ {t.newMenuItem}</summary>
         <form action={createMenuItem} className="mt-3 space-y-2">
@@ -34,6 +42,15 @@ export default async function MenuPage() {
             <input name="category" placeholder={t.category} className="input" />
             <input name="selling_price" inputMode="decimal" placeholder={t.sellingPrice} className="input num" />
           </div>
+          {menu?.[0] && "station" in menu[0] && (
+            <label className="flex items-center gap-2 text-sm">
+              {t.madeAt}
+              <select name="station" defaultValue="bar" className="input min-h-9 w-auto">
+                <option value="bar">☕ {t.stationBar}</option>
+                <option value="kitchen">🍳 {t.stationKitchen}</option>
+              </select>
+            </label>
+          )}
           <button className="btn-primary w-full">{t.add}</button>
         </form>
       </details>
