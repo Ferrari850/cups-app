@@ -2,15 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { effectiveMode, getPrintPrefs, markPrinted, printInFrame, setStationSince, stationSince, wasPrinted } from "@/lib/device-print";
+import { effectiveMode, getPrintPrefs, markPrinted, placingHere, printInFrame, setStationSince, stationSince, wasPrinted } from "@/lib/device-print";
 
 /**
  * Print station: on the till that has the receipt printer, prints every new order placed on any
  * device (staff phones, tablets). Runs on every screen of the app on that till while it is open.
- * Turned on in Settings > This device's receipt printer. Waits a few seconds after an order is placed
- * so the device that took it can enter the prize draw or print it itself first.
+ * Turned on in Settings > This device's receipt printer. Prints about a second after the order is placed
+ * (Realtime), with a poll as backup. An order this till is placing itself is left to the till.
  */
-const WAIT_MS = 6000;
+
 
 export default function PrintStation({ label }: { label: string }) {
   const [on, setOn] = useState(false);
@@ -47,8 +47,8 @@ export default function PrintStation({ label }: { label: string }) {
         let newest = since;
         let later = false;
         for (const o of (data ?? []) as { id: string; created_at: string; status: string }[]) {
-          if (Date.now() - Date.parse(o.created_at) < WAIT_MS) {
-            later = true; // too fresh: look again in a moment, and don't move past it
+          if (placingHere()) {
+            later = true; // this till is placing an order: wait until it has marked its own receipt
             break;
           }
           newest = o.created_at;
@@ -60,7 +60,7 @@ export default function PrintStation({ label }: { label: string }) {
         if (newest !== since) setStationSince(newest);
         if (later && !stopped) {
           if (timer) clearTimeout(timer);
-          timer = setTimeout(check, 2000);
+          timer = setTimeout(check, 400);
         }
       } finally {
         running.current = false;
@@ -72,7 +72,7 @@ export default function PrintStation({ label }: { label: string }) {
       .channel("print-station")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, () => {
         if (timer) clearTimeout(timer);
-        timer = setTimeout(check, WAIT_MS + 500);
+        timer = setTimeout(check, 300);
       })
       .subscribe();
     const poll = setInterval(check, 15_000); // backup if live updates drop
