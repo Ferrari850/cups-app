@@ -15,7 +15,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     supabase.from("invoices").select("*").eq("id", id).single(),
     supabase.from("invoice_lines").select("*, items(name, name_ar, base_unit)").eq("invoice_id", id).order("line_no"),
     supabase.from("invoice_files").select("storage_path, mime_type, page_no").eq("invoice_id", id).order("page_no"),
-    supabase.from("items").select("id, name, name_ar, base_unit").order("name"),
+    supabase.from("items").select("*").order("name"),
     supabase.from("price_alerts").select("item_id, change_pct").eq("invoice_id", id),
   ]);
   if (!inv) notFound();
@@ -96,7 +96,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             skip: l.skip,
             applied: !!l.applied,
           }))}
-          items={(items ?? []).map((i) => ({ id: i.id, label: localName(i, locale), base_unit: i.base_unit }))}
+          items={(items ?? []).filter((i) => !i.is_prep).map((i) => ({ id: i.id, label: localName(i, locale), base_unit: i.base_unit }))}
         />
       )}
 

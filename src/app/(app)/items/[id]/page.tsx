@@ -6,11 +6,13 @@ import { localName } from "@/lib/i18n";
 import { PageHeader } from "@/components/ui";
 import SubmitButton from "@/components/submit-button";
 import { deleteItem, updateItem } from "../actions";
+import PrepSection from "./prep";
 
 type H = { id: string; unit_cost: number; invoice_unit_price: number | null; invoice_unit: string | null; recorded_on: string; invoice_id: string | null; suppliers: { name: string } | null };
 
-export default async function ItemPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ItemPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ err?: string; batch?: string }> }) {
   const { id } = await params;
+  const sp = await searchParams;
   const { supabase, t, locale } = await requireManager();
   const [{ data: item }, { data }] = await Promise.all([
     supabase.from("items").select("*").eq("id", id).single(),
@@ -22,6 +24,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
       .limit(50),
   ]);
   if (!item) notFound();
+  const isPrep = item.is_prep === true;
   const history = (data ?? []) as unknown as H[];
   const mult = item.base_unit === "pcs" ? 1 : 1000;
   const per = item.base_unit === "pcs" ? t.unit_pcs : item.base_unit === "g" ? "kg" : "L";
@@ -36,6 +39,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
   return (
     <>
       <PageHeader title={localName(item, locale)} back="/items" />
+      {isPrep && <p className="mb-3"><span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent-ink">🏠 {t.homemade}</span></p>}
       <div className="card mb-4 text-center">
         <div className="muted">{t.currentCost}</div>
         <div className="num text-3xl font-bold text-bean-800">
@@ -50,8 +54,10 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
         )}
       </div>
 
-      <h2 className="eyebrow mb-2.5 px-1">{t.priceHistory}</h2>
-      <ul className="card mb-4 divide-y divide-bean-100 p-0">
+      {isPrep && <PrepSection item={item} sp={sp} />}
+
+      {(!isPrep || history.length > 0) && <h2 className="eyebrow mb-2.5 px-1">{t.priceHistory}</h2>}
+      {(!isPrep || history.length > 0) && <ul className="card mb-4 divide-y divide-bean-100 p-0">
         {history.map((h, i) => {
           const prev = history[i + 1];
           const pct = prev ? ((h.unit_cost - prev.unit_cost) / prev.unit_cost) * 100 : 0;
@@ -72,7 +78,7 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
           );
         })}
         {history.length === 0 && <li className="muted px-4 py-3">{t.noPrice}</li>}
-      </ul>
+      </ul>}
 
       <details className="card">
         <summary className="cursor-pointer font-medium">{t.edit}</summary>
@@ -88,8 +94,20 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
               <option value="pcs">{t.unit_pcs}</option>
             </select>
           </div>
-          <label className="label">{t.currentCost} (AED / {per}) <span className="muted">({t.optional})</span></label>
-          <input name="manual_price" inputMode="decimal" className="input num" />
+          {"is_prep" in item && (
+            <label className="flex items-start gap-2 py-1 text-sm">
+              <input type="hidden" name="was_prep" value={isPrep ? "1" : "0"} />
+              <input type="checkbox" name="is_prep" defaultChecked={isPrep} className="mt-1" /> {t.isHomemade}
+            </label>
+          )}
+          {isPrep ? (
+            <p className="muted text-sm">{t.manualPriceHidden}</p>
+          ) : (
+            <>
+              <label className="label">{t.currentCost} (AED / {per}) <span className="muted">({t.optional})</span></label>
+              <input name="manual_price" inputMode="decimal" className="input num" />
+            </>
+          )}
           <SubmitButton>{t.save}</SubmitButton>
         </form>
         <form action={deleteItem} className="mt-4">
