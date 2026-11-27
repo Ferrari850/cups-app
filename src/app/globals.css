@@ -259,8 +259,9 @@ select.input {
   position: absolute;
   bottom: 0;
   left: 50%;
-  width: 1px;
-  height: 1px;
+  width: 3px;
+  height: 3px;
+  margin-left: -1px;
   background: #000;
 }
 @media screen {

@@ -11,8 +11,8 @@
  */
 export type PrintMode = "auto" | "computer" | "wifi" | "off";
 /** feed: blank paper (mm) after the receipt, so the whole receipt has passed the cutter before it cuts. */
-export type PrintPrefs = { mode: PrintMode; auto: boolean; feed: number; station: boolean };
-export const DEFAULT_FEED = 20;
+export type PrintPrefs = { mode: PrintMode; auto: boolean; feed: number; station: boolean; feedSet?: boolean };
+export const DEFAULT_FEED = 30;
 
 const KEY = "cups.print";
 
@@ -20,8 +20,10 @@ export function getPrintPrefs(): PrintPrefs {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || "null");
     if (v && ["auto", "computer", "wifi", "off"].includes(v.mode)) {
-      const feed = Number(v.feed);
-      return { mode: v.mode, auto: v.auto !== false, feed: Number.isFinite(feed) && feed >= 0 && feed <= 80 ? feed : DEFAULT_FEED, station: v.station === true };
+      let feed = Number(v.feed);
+      // 20 mm was the first default and was too short on the E-POS ECO250: move devices still on it.
+      if (feed === 20 && !v.feedSet) feed = DEFAULT_FEED;
+      return { mode: v.mode, auto: v.auto !== false, feed: Number.isFinite(feed) && feed >= 0 && feed <= 80 ? feed : DEFAULT_FEED, station: v.station === true, feedSet: v.feedSet === true };
     }
   } catch {}
   return { mode: "auto", auto: true, feed: DEFAULT_FEED, station: false };

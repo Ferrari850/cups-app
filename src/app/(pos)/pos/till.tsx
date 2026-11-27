@@ -69,7 +69,7 @@ export default function Till({
   // enters or skips the draw, so the printed receipt shows the entry and the phone.
   const heldPrint = useRef<string | null>(null);
   // This device's receipt printer (set in Settings > This device's printer).
-  const [prefs, setPrefs] = useState<PrintPrefs>({ mode: "auto", auto: true, feed: 20, station: false });
+  const [prefs, setPrefs] = useState<PrintPrefs>({ mode: "auto", auto: true, feed: 30, station: false });
   useEffect(() => setPrefs(getPrintPrefs()), []);
   const printMode = effectiveMode(prefs, settings?.printer_ip);
   const drawMin = Number(settings?.draw_min_total ?? 50);
