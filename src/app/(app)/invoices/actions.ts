@@ -4,11 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireManager } from "@/lib/session";
 
-export async function createInvoice() {
+export type InvoiceKind = "invoice" | "price_list";
+
+/** A supplier invoice, or a price list (a list of ingredient costs: prices only, no stock, not in Finance). */
+export async function createInvoice(kind: InvoiceKind = "invoice") {
   const { supabase, profile } = await requireManager();
   const { data, error } = await supabase
     .from("invoices")
-    .insert({ uploaded_by: profile.id, status: "reading" })
+    .insert({ uploaded_by: profile.id, status: "reading", kind: kind === "price_list" ? "price_list" : "invoice" })
     .select("id")
     .single();
   if (error || !data) throw new Error(error?.message ?? "Could not create invoice");

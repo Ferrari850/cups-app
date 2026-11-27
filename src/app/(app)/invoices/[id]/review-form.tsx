@@ -23,6 +23,7 @@ export default function ReviewForm({
   locale: Locale;
   invoice: {
     id: string;
+    kind: "invoice" | "price_list";
     supplier_name: string;
     invoice_number: string | null;
     invoice_date: string | null;
@@ -35,6 +36,7 @@ export default function ReviewForm({
   items: Item[];
 }) {
   const router = useRouter();
+  const priceList = invoice.kind === "price_list";
   const [header, setHeader] = useState({
     supplier_name: invoice.supplier_name,
     invoice_number: invoice.invoice_number ?? "",
@@ -83,9 +85,16 @@ export default function ReviewForm({
     <div className="space-y-4">
       <div className="card grid grid-cols-2 gap-3">
         <div className="col-span-2">
-          <label className="label">{t.supplier}</label>
+          <label className="label">{priceList ? t.supplierOptional : t.supplier}</label>
           <input className="input" value={header.supplier_name} onChange={(e) => setHeader({ ...header, supplier_name: e.target.value })} />
         </div>
+        {priceList ? (
+          <div className="col-span-2">
+            <label className="label">{t.costListDate}</label>
+            <input type="date" className="input num" value={header.invoice_date} onChange={(e) => setHeader({ ...header, invoice_date: e.target.value })} />
+          </div>
+        ) : (
+        <>
         <div>
           <label className="label">{t.invoiceNo}</label>
           <input className="input num" value={header.invoice_number} onChange={(e) => setHeader({ ...header, invoice_number: e.target.value })} />
@@ -100,6 +109,8 @@ export default function ReviewForm({
             <input inputMode="decimal" className="input num" value={header[k]} onChange={(e) => setHeader({ ...header, [k]: e.target.value })} />
           </div>
         ))}
+        </>
+        )}
       </div>
 
       {invoice.ai_notes && (
@@ -107,7 +118,7 @@ export default function ReviewForm({
           <b>{t.aiNotes}:</b> {invoice.ai_notes}
         </div>
       )}
-      <p className="muted">{t.reviewHint}</p>
+      <p className="muted">{priceList ? t.costListReviewHint : t.reviewHint}</p>
 
       <ul className="space-y-3">
         {lines.map((l, i) => {
@@ -137,11 +148,13 @@ export default function ReviewForm({
                 </label>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className={`grid gap-2 ${priceList ? "grid-cols-2" : "grid-cols-3"}`}>
+                {!priceList && (
                 <div>
                   <label className="text-xs text-bean-600">{t.qty}</label>
                   <input inputMode="decimal" className="input num min-h-9" value={l.quantity ?? ""} onChange={(e) => update(i, { quantity: num(e.target.value) })} />
                 </div>
+                )}
                 <div>
                   <label className="text-xs text-bean-600">{t.unit}</label>
                   <input className="input min-h-9" value={l.unit ?? ""} onChange={(e) => update(i, { unit: e.target.value || null })} />
@@ -211,7 +224,7 @@ export default function ReviewForm({
       <div className="sticky bottom-20 flex gap-2 rounded-2xl bg-bean-50/95 py-2 backdrop-blur">
         <button className="btn-secondary" disabled={pending} onClick={() => submit(false)}>{t.save}</button>
         <button className="btn-primary flex-1" disabled={pending} onClick={() => submit(true)}>
-          {pending ? t.saving : t.confirmInvoice}
+          {pending ? t.saving : priceList ? t.saveCostList : t.confirmInvoice}
         </button>
       </div>
     </div>
