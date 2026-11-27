@@ -15,7 +15,8 @@ type Line = {
   id: string;
   quantity: number;
   waste_pct: number;
-  items: { id: string; name: string; name_ar: string | null; base_unit: string; unit_cost: number | null; is_prep?: boolean } | null;
+  packaging?: boolean;
+  items: { id: string; name: string; name_ar: string | null; base_unit: string; unit_cost: number | null; is_prep?: boolean; is_packaging?: boolean } | null;
 };
 
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,7 +26,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
     supabase.from("menu_items").select("*").eq("id", id).single(),
     supabase
       .from("recipe_lines")
-      .select("id, quantity, waste_pct, items(*)")
+      .select("*, items(*)")
       .eq("menu_item_id", id)
       .order("sort"),
     supabase.from("items").select("*").order("name"),
@@ -37,22 +38,61 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
     supabase.from("cafe_settings").select("target_cost_pct").maybeSingle(),
   ]);
   if (!m) notFound();
-  const lines = (lineData ?? []) as unknown as Line[];
+  const all = (lineData ?? []) as unknown as Line[];
+  // Packaging lines are per portion; ingredient lines are for the whole recipe.
+  const lines = all.filter((l) => !l.packaging);
+  const packLines = all.filter((l) => l.packaging);
+  const hasPackaging = (lineData ?? []).length === 0 || "packaging" in (lineData ?? [])[0];
+  const packItems = (items ?? []).filter((i) => i.is_packaging === true);
+  const canPack = hasPackaging && (items ?? []).some((i) => "is_packaging" in i);
 
   const lineCost = (l: Line) =>
     l.items?.unit_cost != null ? Number(l.quantity) * (1 + Number(l.waste_pct) / 100) * Number(l.items.unit_cost) : null;
   const batch = lines.reduce((s, l) => s + (lineCost(l) ?? 0), 0);
   const portions = Number(m.yield_portions) || 1;
-  const cost = batch / portions;
+  const ingredientCost = batch / portions;
+  const packagingCost = packLines.reduce((s, l) => s + (lineCost(l) ?? 0), 0);
+  const cost = ingredientCost + packagingCost;
   const missing = lines.some((l) => lineCost(l) == null);
-  const pct = lines.length ? costPct(cost, m.selling_price) : null;
+  const missingPack = packLines.some((l) => lineCost(l) == null);
+  const pct = all.length ? costPct(cost, m.selling_price) : null;
   const net = m.selling_price ? Number(m.selling_price) / (1 + VAT) : null;
   const fixedBy = new Map((fixed ?? []).map((f) => [f.channel_id, Number(f.price)]));
   const linked = new Set((links ?? []).map((l) => l.group_id));
-  const suggested = lines.length && !missing ? suggestedPrice(cost, Number(settings?.target_cost_pct ?? 30)) : null;
+  const suggested = all.length && !missing && !missingPack ? suggestedPrice(cost, Number(settings?.target_cost_pct ?? 30)) : null;
   const tooCostly = pct != null && pct > 60;
   const oddQty = (l: Line) => (l.items?.base_unit === "pcs" ? Number(l.quantity) > 10 : Number(l.quantity) > 1500);
   const unitLabel = (u?: string) => (u === "g" ? t.unit_g : u === "ml" ? t.unit_ml : t.unit_pcs);
+  const optionLabel = (i: { name: string; name_ar: string | null; base_unit: string; unit_cost: number | null; is_prep?: boolean }) =>
+    `${i.is_prep ? "🏠 " : ""}${localName(i, locale)} (${unitLabel(i.base_unit)})${i.unit_cost != null ? ` · ${fmtAED(Number(i.unit_cost) * (i.base_unit === "pcs" ? 1 : 1000), locale)}/${i.base_unit === "pcs" ? unitLabel("pcs") : i.base_unit === "g" ? "kg" : "L"}` : ""}`;
+
+  const renderLine = (l: Line, pack: boolean) => {
+    const c = lineCost(l);
+    return (
+      <li key={l.id} className="card">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="font-medium">
+            {l.items ? (
+              l.items.is_prep ? <Link href={`/items/${l.items.id}`} className="underline">🏠 {localName(l.items, locale)}</Link> : <>{pack ? "📦 " : ""}{localName(l.items, locale)}</>
+            ) : "?"}
+            {!pack && oddQty(l) && <span className="ms-1 text-red-700" title={t.checkQuantities}>⚠️</span>}
+          </span>
+          <span className="num font-semibold">{c != null ? fmtAED(c, locale, 3) : t.noPrice}</span>
+        </div>
+        <form action={updateRecipeLine} className="flex items-center gap-2">
+          <input type="hidden" name="id" value={l.id} />
+          <input type="hidden" name="menu_item_id" value={id} />
+          <input name="quantity" defaultValue={l.quantity} inputMode="decimal" className="input num min-h-9 w-24" />
+          <span className="text-sm">{unitLabel(l.items?.base_unit)}</span>
+          {!pack && <input name="waste_pct" defaultValue={l.waste_pct || ""} inputMode="decimal" placeholder={t.waste} className="input num min-h-9 w-20" />}
+          <SubmitButton className="btn-secondary btn-sm">✓</SubmitButton>
+          <button formAction={deleteRecipeLine} className="ms-auto p-1 text-bean-300 hover:text-red-600" aria-label={t.delete}>
+            <Icon name="trash" className="h-4 w-4" />
+          </button>
+        </form>
+      </li>
+    );
+  };
 
   return (
     <>
@@ -68,13 +108,21 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         </div>
         <div className="tile">
           <div className="eyebrow truncate">{t.margin}</div>
-          <div className="num mt-1 text-[clamp(0.8rem,3.6vw,1.25rem)] font-extrabold tracking-tight whitespace-nowrap">{net != null && lines.length ? fmtAED(net - cost, locale) : "–"}</div>
+          <div className="num mt-1 text-[clamp(0.8rem,3.6vw,1.25rem)] font-extrabold tracking-tight whitespace-nowrap">{net != null && all.length ? fmtAED(net - cost, locale) : "–"}</div>
         </div>
         <div className="tile">
           <div className="eyebrow truncate">{t.foodCost}</div>
           <div className={`num mt-1 text-[clamp(0.8rem,3.6vw,1.25rem)] font-extrabold tracking-tight whitespace-nowrap ${pctColor(pct)}`}>{pct != null ? `${pct.toFixed(1)}%` : "–"}</div>
         </div>
+        {canPack && (
+          <dl className="col-span-3 grid grid-cols-3 gap-1 px-1 pt-1 text-center text-sm">
+            <div><dt className="muted text-xs">{t.ingredientCost}</dt><dd className="num font-semibold">{fmtAED(ingredientCost, locale)}</dd></div>
+            <div><dt className="muted text-xs">{t.packagingCost}</dt><dd className="num font-semibold">{fmtAED(packagingCost, locale)}</dd></div>
+            <div><dt className="muted text-xs">{t.totalCost}</dt><dd className="num font-bold">{fmtAED(cost, locale)}</dd></div>
+          </dl>
+        )}
         {missing && <p className="col-span-3 text-sm text-amber-800">⚠️ {t.missingPrices}</p>}
+        {missingPack && <p className="col-span-3 text-sm text-amber-800">⚠️ {t.missingPackagingPrices}</p>}
         {tooCostly && <p className="col-span-3 text-sm font-semibold text-red-700">⚠️ {t.recipeTooCostly}</p>}
         {lines.some(oddQty) && <p className="col-span-3 text-sm font-semibold text-red-700">⚠️ {t.checkQuantities}</p>}
         {suggested != null && (
@@ -102,10 +150,8 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
         )}
         <select name="item_id" required className="input" defaultValue="">
           <option value="" disabled>—</option>
-          {(items ?? []).map((i) => (
-            <option key={i.id} value={i.id}>
-              {i.is_prep ? "🏠 " : ""}{localName(i, locale)} ({unitLabel(i.base_unit)}){i.unit_cost != null ? ` · ${fmtAED(Number(i.unit_cost) * (i.base_unit === "pcs" ? 1 : 1000), locale)}/${i.base_unit === "pcs" ? unitLabel("pcs") : i.base_unit === "g" ? "kg" : "L"}` : ""}
-            </option>
+          {(items ?? []).filter((i) => i.is_packaging !== true).map((i) => (
+            <option key={i.id} value={i.id}>{optionLabel(i)}</option>
           ))}
         </select>
         <div className="grid grid-cols-2 gap-2">
@@ -116,34 +162,36 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
       </form>
 
       <ul className="mb-3 space-y-2">
-        {lines.map((l) => {
-          const c = lineCost(l);
-          return (
-            <li key={l.id} className="card">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="font-medium">
-                  {l.items ? (
-                    l.items.is_prep ? <Link href={`/items/${l.items.id}`} className="underline">🏠 {localName(l.items, locale)}</Link> : localName(l.items, locale)
-                  ) : "?"}
-                  {oddQty(l) && <span className="ms-1 text-red-700" title={t.checkQuantities}>⚠️</span>}
-                </span>
-                <span className="num font-semibold">{c != null ? fmtAED(c, locale, 3) : t.noPrice}</span>
-              </div>
-              <form action={updateRecipeLine} className="flex items-center gap-2">
-                <input type="hidden" name="id" value={l.id} />
-                <input type="hidden" name="menu_item_id" value={id} />
-                <input name="quantity" defaultValue={l.quantity} inputMode="decimal" className="input num min-h-9 w-24" />
-                <span className="text-sm">{unitLabel(l.items?.base_unit)}</span>
-                <input name="waste_pct" defaultValue={l.waste_pct || ""} inputMode="decimal" placeholder={t.waste} className="input num min-h-9 w-20" />
-                <SubmitButton className="btn-secondary btn-sm">✓</SubmitButton>
-                <button formAction={deleteRecipeLine} className="ms-auto p-1 text-bean-300 hover:text-red-600" aria-label={t.delete}>
-                  <Icon name="trash" className="h-4 w-4" />
-                </button>
-              </form>
-            </li>
-          );
-        })}
+        {lines.map((l) => renderLine(l, false))}
       </ul>
+
+      {canPack && (
+        <>
+          <h2 className="eyebrow mb-2.5 mt-6 flex items-center justify-between px-1">
+            <span>📦 {t.packagingCost}</span>
+            {packLines.length > 0 && <span className="num normal-case">{fmtAED(packagingCost, locale)}</span>}
+          </h2>
+          {packLines.length === 0 && <p className="muted mb-3">{t.packagingEmpty}</p>}
+          <form action={addRecipeLine} className="card mb-4 space-y-2">
+            <input type="hidden" name="menu_item_id" value={id} />
+            <input type="hidden" name="packaging" value="1" />
+            <label className="mb-1 block text-base font-bold">+ {t.addPackaging}</label>
+            {packItems.length === 0 && <p className="text-sm text-amber-800">{t.noPackagingItems} <Link href="/items" className="underline">{t.items}</Link></p>}
+            <select name="item_id" required className="input" defaultValue="">
+              <option value="" disabled>—</option>
+              {packItems.map((i) => (
+                <option key={i.id} value={i.id}>📦 {optionLabel(i)}</option>
+              ))}
+            </select>
+            <input name="quantity" required inputMode="decimal" defaultValue="1" placeholder={t.quantity} className="input num" />
+            <p className="muted text-xs">{t.packagingQtyHint}</p>
+            <SubmitButton>{t.add}</SubmitButton>
+          </form>
+          <ul className="mb-3 space-y-2">
+            {packLines.map((l) => renderLine(l, true))}
+          </ul>
+        </>
+      )}
 
       {(channels ?? []).length > 0 && (
         <section className="card mb-4 space-y-4">

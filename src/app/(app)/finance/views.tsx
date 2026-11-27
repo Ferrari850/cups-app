@@ -26,6 +26,12 @@ export function PnlTable({ pl, t, locale }: { pl: PL; t: Dict; locale: Locale })
         {pl.refundsNet > 0 && <Line label={t.refundsLess} value={neg(pl.refundsNet)} sub negative />}
         <Line label={t.revenueNet} value={a(pl.revenue)} strong />
         <Line label={t.cogsLabel} value={neg(pl.cogs)} sub negative />
+        {pl.cogsPackaging > 0 && (
+          <>
+            <Line label={<span className="ps-4">{t.cogsIngredients}</span>} value={neg(pl.cogsIngredients)} sub negative />
+            <Line label={<span className="ps-4">{t.cogsPackaging}</span>} value={neg(pl.cogsPackaging)} sub negative />
+          </>
+        )}
         <Line label={t.grossProfit} value={a(pl.grossProfit)} strong />
         <Line label={t.grossMargin} value={pct(pl.grossMargin)} sub />
         <tr><td colSpan={2} className="eyebrow pt-4 pb-1">{t.operatingExpenses}</td></tr>

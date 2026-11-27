@@ -52,13 +52,16 @@ export async function addRecipeLine(form: FormData) {
   const quantity = n(form.get("quantity"));
   const item_id = String(form.get("item_id") ?? "");
   if (!item_id || !quantity || quantity <= 0) return;
-  await supabase.from("recipe_lines").insert({
+  const { error } = await supabase.from("recipe_lines").insert({
     menu_item_id: menuId,
     item_id,
     quantity,
     waste_pct: n(form.get("waste_pct")) ?? 0,
     sort: Date.now() % 1_000_000,
+    // Packaging lines are per portion. Only sent for packaging, so ingredients still save before the update runs.
+    ...(form.get("packaging") === "1" ? { packaging: true } : {}),
   });
+  if (error) throw new Error(error.message);
   revalidatePath(`/menu/${menuId}`);
   revalidatePath("/menu");
 }

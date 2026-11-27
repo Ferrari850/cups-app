@@ -10,8 +10,9 @@ export default async function ItemsPage({ searchParams }: { searchParams: Promis
   let query = supabase.from("items").select("*").order("name");
   if (q) query = query.or(`name.ilike.%${q.replace(/[%,()]/g, "")}%,name_ar.ilike.%${q.replace(/[%,()]/g, "")}%`);
   const { data } = await query;
-  // Homemade items first, so they are easy to find.
-  const items = [...(data ?? [])].sort((a, b) => Number(!!b.is_prep) - Number(!!a.is_prep));
+  // Homemade items first, packaging last, so each is easy to find.
+  const rank = (i: { is_prep?: boolean; is_packaging?: boolean }) => (i.is_prep ? 0 : i.is_packaging ? 2 : 1);
+  const items = [...(data ?? [])].sort((a, b) => rank(a) - rank(b));
 
   return (
     <>
@@ -47,6 +48,7 @@ export default async function ItemsPage({ searchParams }: { searchParams: Promis
                   <span className="truncate font-medium">
                     {localName(i, locale)}
                     {i.is_prep && <span className="ms-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-ink">🏠 {t.homemade}</span>}
+                    {i.is_packaging && <span className="ms-2 rounded-full bg-bean-100 px-2 py-0.5 text-xs font-semibold text-bean-700">📦 {t.packaging}</span>}
                   </span>
                   <span className="num shrink-0">
                     {i.unit_cost != null

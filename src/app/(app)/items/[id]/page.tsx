@@ -40,6 +40,7 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
     <>
       <PageHeader title={localName(item, locale)} back="/items" />
       {isPrep && <p className="mb-3"><span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-semibold text-accent-ink">🏠 {t.homemade}</span></p>}
+      {item.is_packaging === true && <p className="mb-3"><span className="rounded-full bg-bean-100 px-2.5 py-0.5 text-xs font-semibold text-bean-700">📦 {t.packaging}</span></p>}
       <div className="card mb-4 text-center">
         <div className="muted">{t.currentCost}</div>
         <div className="num text-3xl font-bold text-bean-800">
@@ -98,6 +99,12 @@ export default async function ItemPage({ params, searchParams }: { params: Promi
             <label className="flex items-start gap-2 py-1 text-sm">
               <input type="hidden" name="was_prep" value={isPrep ? "1" : "0"} />
               <input type="checkbox" name="is_prep" defaultChecked={isPrep} className="mt-1" /> {t.isHomemade}
+            </label>
+          )}
+          {"is_packaging" in item && !isPrep && (
+            <label className="flex items-start gap-2 py-1 text-sm">
+              <input type="hidden" name="has_packaging" value="1" />
+              <input type="checkbox" name="is_packaging" defaultChecked={item.is_packaging === true} className="mt-1" /> {t.isPackaging}
             </label>
           )}
           {isPrep ? (
