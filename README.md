@@ -38,7 +38,7 @@ Roles: **owner** (everything, the only one who can make managers), **manager** (
 4. **More → Channels & apps:** check each app's price multiplier, rounding and commission %.
 5. **More → Add-ons:** milk choices, extra shots, Extra Acai… link each to the stock item it uses.
 6. **Profile → Manager PIN:** managers set a PIN to approve refunds on a cashier's tablet.
-7. On the counter tablets open **/pos** (till) and **/bar** (bar display), and add both to the home screen.
+7. On the counter tablets open **/pos** (POS) and **/bar** (bar display), and add both to the home screen.
 
 How it fits together: every sale is priced by the database from the menu and channel rule, takes stock out by recipe (and add-ons), and records cash, card or app payment against the open cash drawer. Confirmed invoices put stock in. Weekly counts and waste correct it.
 
