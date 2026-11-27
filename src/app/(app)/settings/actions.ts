@@ -13,7 +13,7 @@ export async function saveSettings(form: FormData) {
     .update({
       name: s("name") ?? "CUPS",
       name_ar: s("name_ar"),
-      trn: s("trn"),
+      trn: s("trn")?.replace(/[\s-]/g, "") ?? null,
       address: s("address"),
       address_ar: s("address_ar"),
       phone: s("phone"),
@@ -25,6 +25,15 @@ export async function saveSettings(form: FormData) {
       margin_alert_pct: n("margin_alert_pct", 35),
       // Only sent once the prize draw columns exist (migration 0004).
       ...(form.has("draw_min_total") ? { draw_enabled: form.get("draw_enabled") === "on", draw_min_total: n("draw_min_total", 50) } : {}),
+      // VAT fields exist once migration 0006 has run.
+      ...(form.has("vat_emirate")
+        ? {
+            legal_name: s("legal_name"),
+            vat_emirate: s("vat_emirate") ?? "dubai",
+            vat_period: s("vat_period") === "monthly" ? "monthly" : "quarterly",
+            vat_first_month: [1, 2, 3].includes(Number(form.get("vat_first_month"))) ? Number(form.get("vat_first_month")) : 1,
+          }
+        : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", true);
