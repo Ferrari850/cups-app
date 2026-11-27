@@ -67,7 +67,12 @@ export async function saveInvoice(id: string, header: HeaderInput, lines: LineIn
     .eq("status", "review");
   if (hErr) return { ok: false, error: hErr.message };
 
+  // Lines already saved by an earlier confirm stay as they are.
+  const { data: savedRows } = await supabase.from("invoice_lines").select("id").eq("invoice_id", id).eq("applied", true);
+  const saved = new Set((savedRows ?? []).map((r) => r.id));
+
   for (const l of lines) {
+    if (saved.has(l.id)) continue;
     let itemId = l.item_id;
     if (itemId === "__new__") {
       const name = (l.new_name ?? "").trim();
@@ -111,12 +116,21 @@ export async function saveInvoice(id: string, header: HeaderInput, lines: LineIn
   return { ok: true, alerts };
 }
 
+export async function reopenInvoice(form: FormData) {
+  const { supabase } = await requireManager();
+  const id = String(form.get("id"));
+  const { error } = await supabase.rpc("reopen_invoice", { p_invoice: id });
+  if (error) throw new Error(error.message);
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${id}`);
+}
+
 export async function deleteInvoice(form: FormData) {
   const { supabase } = await requireManager();
   const id = String(form.get("id"));
   const { data: files } = await supabase.from("invoice_files").select("storage_path").eq("invoice_id", id);
   if (files?.length) await supabase.storage.from("invoices").remove(files.map((f) => f.storage_path));
-  await supabase.from("invoices").delete().eq("id", id).neq("status", "confirmed");
+  await supabase.from("invoices").delete().eq("id", id).neq("status", "confirmed").is("confirmed_at", null);
   revalidatePath("/invoices");
   redirect("/invoices");
 }

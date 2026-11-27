@@ -4,7 +4,7 @@ import { fmtAED, fmtDate, fmtNum } from "@/lib/format";
 import { localName } from "@/lib/i18n";
 import { PageHeader, StatusBadge } from "@/components/ui";
 import SubmitButton from "@/components/submit-button";
-import { deleteInvoice } from "../actions";
+import { deleteInvoice, reopenInvoice } from "../actions";
 import ReviewForm from "./review-form";
 import { Poller, RetryButton } from "./reading";
 
@@ -25,6 +25,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     : [];
 
   const title = inv.supplier_name ?? t.newInvoice;
+  const unsaved = (lines ?? []).filter((l) => !l.applied).length;
 
   return (
     <>
@@ -93,6 +94,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             pack_size: l.pack_size,
             base_unit: l.base_unit ?? "pcs",
             skip: l.skip,
+            applied: !!l.applied,
           }))}
           items={(items ?? []).map((i) => ({ id: i.id, label: localName(i, locale), base_unit: i.base_unit }))}
         />
@@ -100,6 +102,15 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
       {inv.status === "confirmed" && (
         <div className="space-y-4">
+          {unsaved > 0 && (
+            <form action={reopenInvoice} className="card space-y-3 ring-2 ring-amber-300">
+              <input type="hidden" name="id" value={id} />
+              <p className="text-sm text-amber-800">
+                <span className="num font-semibold">{unsaved}</span> {t.reopenHint}
+              </p>
+              <SubmitButton className="btn-primary w-full">{t.reopenInvoice}</SubmitButton>
+            </form>
+          )}
           <div className="card grid grid-cols-2 gap-2 text-sm">
             <div className="muted">{t.invoiceNo}</div>
             <div className="num">{inv.invoice_number ?? "–"}</div>
@@ -144,7 +155,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {inv.status !== "confirmed" && (
+      {inv.status !== "confirmed" && !inv.confirmed_at && (
         <form action={deleteInvoice} className="mt-6">
           <input type="hidden" name="id" value={id} />
           <SubmitButton className="btn-danger w-full" confirmText={t.areYouSure}>{t.delete}</SubmitButton>

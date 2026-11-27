@@ -7,7 +7,7 @@ import { fmtAED, type Locale } from "@/lib/format";
 import { saveInvoice, type LineInput } from "../actions";
 
 type BaseUnit = "g" | "ml" | "pcs";
-type Line = LineInput & { raw_name: string; suggested_name: string | null };
+type Line = LineInput & { raw_name: string; suggested_name: string | null; applied?: boolean };
 type Item = { id: string; label: string; base_unit: string };
 
 const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(",", ".")));
@@ -48,7 +48,7 @@ export default function ReviewForm({
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const itemUnit = useMemo(() => new Map(items.map((i) => [i.id, i.base_unit as BaseUnit])), [items]);
-  const unlinked = lines.filter((l) => !l.skip && !l.item_id).length;
+  const unlinked = lines.filter((l) => !l.applied && !l.skip && !l.item_id).length;
 
   const update = (i: number, patch: Partial<Line>) => setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
 
@@ -65,7 +65,7 @@ export default function ReviewForm({
           vat: num(header.vat),
           total: num(header.total),
         },
-        lines.map((l) => ({
+        lines.filter((l) => !l.applied).map((l) => ({
           id: l.id, item_id: l.item_id, new_name: l.new_name, quantity: l.quantity, unit: l.unit,
           unit_price: l.unit_price, line_total: l.line_total, pack_size: l.pack_size, base_unit: l.base_unit, skip: l.skip,
         })),
@@ -114,6 +114,16 @@ export default function ReviewForm({
           const unit = (l.item_id && l.item_id !== "__new__" ? itemUnit.get(l.item_id) : null) ?? l.base_unit;
           const per =
             l.unit_price != null && l.pack_size ? (l.unit_price / l.pack_size) * (unit === "pcs" ? 1 : 1000) : null;
+          if (l.applied)
+            return (
+              <li key={l.id} className="card flex items-center justify-between gap-2 opacity-70">
+                <div className="min-w-0">
+                  <div className="truncate font-medium" dir="auto">{items.find((it) => it.id === l.item_id)?.label ?? l.raw_name}</div>
+                  <div className="muted truncate" dir="auto">{l.raw_name}</div>
+                </div>
+                <span className="badge shrink-0 bg-green-100 text-green-800">✓ {t.alreadySaved}</span>
+              </li>
+            );
           return (
             <li key={l.id} className={`card space-y-3 ${l.skip ? "opacity-60" : !l.item_id ? "ring-2 ring-amber-300" : ""}`}>
               <div className="flex items-start justify-between gap-2">
