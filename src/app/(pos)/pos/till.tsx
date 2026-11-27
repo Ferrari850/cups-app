@@ -60,7 +60,10 @@ export default function Till({
   const [tendered, setTendered] = useState("");
   const [splitCash, setSplitCash] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ order: PlacedOrder; change: number } | null>(null);
+  const [done, setDone] = useState<{ order: PlacedOrder; change: number; drawn: boolean } | null>(null);
+  // Prize draw details asked on the payment screen (optional).
+  const [draw, setDraw] = useState({ name: "", phone: "" });
+  const [drawErr, setDrawErr] = useState<string | null>(null);
   const [printMsg, setPrintMsg] = useState<string | null>(null);
   const [soldOutMode, setSoldOutMode] = useState(false);
   const [online, setOnline] = useState(true);
@@ -171,6 +174,8 @@ export default function Till({
     setError(null);
     setDone(null);
     setPrintMsg(null);
+    setDraw({ name: "", phone: "" });
+    setDrawErr(null);
   }
 
   async function wifiPrint(orderId: string) {
@@ -201,6 +206,14 @@ export default function Till({
         { method: "card", amount: r2(total - c) },
       ];
     }
+    // Prize draw: optional, but if the cashier started filling it in it must be valid.
+    const drawFilled = drawOn && total > drawMin && !!(draw.name.trim() || draw.phone.trim());
+    if (drawFilled) {
+      const digits = draw.phone.replace(/\D/g, "").length;
+      if (draw.name.trim().length < 2) return setDrawErr(t.drawBadName);
+      if (digits < 7 || digits > 15) return setDrawErr(t.drawBadPhone);
+    }
+    setDrawErr(null);
     const needsCar = ch.needs_car;
     start(async () => {
       const res = await placeOrder({
@@ -209,7 +222,7 @@ export default function Till({
         payments,
         ...(needsCar ? car : {}),
         ...cust,
-      });
+      }, drawFilled ? draw : undefined);
       if (!res.ok) {
         setError(explain(res.error, t));
         return;
@@ -217,8 +230,11 @@ export default function Till({
       setPaying(null);
       // On a print-station till, this till handles its own receipt; the station skips it.
       if (prefs.station) markPrinted(res.order.id);
-      setDone({ order: res.order, change });
-      if (drawOn && res.order.total > drawMin) heldPrint.current = res.order.id;
+      const drawn = drawFilled && !res.drawError;
+      if (res.drawError) setDrawErr(explainDraw(res.drawError, t));
+      setDone({ order: res.order, change, drawn });
+      // Not entered on the payment screen: the done screen offers it again, so the receipt waits.
+      if (drawOn && res.order.total > drawMin && !drawn) heldPrint.current = res.order.id;
       else autoPrint(res.order.id);
     });
   }
@@ -584,6 +600,20 @@ export default function Till({
               )}
             </>
           )}
+          {drawOn && total > drawMin && (
+            <div className="mb-3 space-y-2 rounded-2xl bg-accent-soft p-3">
+              <div className="flex items-center gap-2 font-bold">
+                <Icon name="gift" className="h-5 w-5 text-accent-ink" /> {t.drawOffer}
+              </div>
+              <p className="text-xs text-bean-600">{t.drawOfferHint.replace("{min}", fmtAED(drawMin, locale))}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input value={draw.name} onChange={(e) => setDraw({ ...draw, name: e.target.value })} placeholder={t.customerName} className="input" />
+                <input value={draw.phone} onChange={(e) => setDraw({ ...draw, phone: e.target.value })} placeholder="05X XXX XXXX" type="tel" inputMode="tel" dir="ltr" className="input num" />
+              </div>
+              <p className="text-xs text-bean-600">{t.drawPrivacy}</p>
+              {drawErr && <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{drawErr}</p>}
+            </div>
+          )}
           {error && <p className="mb-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <button type="button" className="btn-primary w-full py-4 text-base" disabled={pending} onClick={() => pay(paying)}>
             {pending ? t.saving : t.confirmPayment}
@@ -604,7 +634,8 @@ export default function Till({
             )}
             {printMsg && <p className="muted mt-2">{printMsg}</p>}
           </div>
-          {drawOn && done.order.total > drawMin && (
+          {done.drawn && <p className="mt-4 rounded-2xl bg-green-50 px-3 py-3 text-center font-bold text-green-800">✓ {t.drawEntered}</p>}
+          {drawOn && done.order.total > drawMin && !done.drawn && (
             <DrawEntry
               key={done.order.id}
               t={t}
@@ -612,7 +643,8 @@ export default function Till({
               minTotal={drawMin}
               onEntered={releasePrint}
               locale={locale}
-              initial={{ name: cust.customer_name, phone: cust.customer_phone }}
+              initial={{ name: draw.name || cust.customer_name, phone: draw.phone || cust.customer_phone }}
+              firstError={drawErr}
             />
           )}
           <div className="mt-4 grid grid-cols-2 gap-2">
@@ -644,12 +676,12 @@ export default function Till({
 }
 
 /** Optional: the customer gives a name and phone to enter the prize draw. Skipping is just "New order". */
-function DrawEntry({ t, orderId, minTotal, locale, initial, onEntered }: { t: Dict; orderId: string; minTotal: number; locale: Locale; initial: { name: string; phone: string }; onEntered: () => void }) {
-  const [open, setOpen] = useState(false);
+function DrawEntry({ t, orderId, minTotal, locale, initial, onEntered, firstError }: { t: Dict; orderId: string; minTotal: number; locale: Locale; initial: { name: string; phone: string }; onEntered: () => void; firstError?: string | null }) {
+  const [open, setOpen] = useState(!!firstError);
   const [name, setName] = useState(initial.name);
   const [phone, setPhone] = useState(initial.phone);
   const [state, setState] = useState<"idle" | "saving" | "done">("idle");
-  const [err, setErr] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(firstError ?? null);
 
   if (state === "done") {
     return <p className="mt-4 rounded-2xl bg-green-50 px-3 py-3 text-center font-bold text-green-800">✓ {t.drawEntered}</p>;
@@ -675,13 +707,7 @@ function DrawEntry({ t, orderId, minTotal, locale, initial, onEntered }: { t: Di
       return;
     }
     setState("idle");
-    const m = res.error;
-    setErr(
-      m.includes("draw_bad_phone") ? t.drawBadPhone
-      : m.includes("draw_bad_name") ? t.drawBadName
-      : m.includes("draw_already") ? t.drawAlready
-      : `${t.error}: ${m}`,
-    );
+    setErr(explainDraw(res.error, t));
   }
   return (
     <div className="mt-4 space-y-2 rounded-2xl bg-bean-50 p-3">
@@ -723,4 +749,11 @@ function explain(msg: string, t: Dict) {
   if (msg.includes("payment_mismatch")) return t.paymentMismatch;
   if (msg.includes("item_not_available")) return t.itemNotAvailable;
   return `${t.error}: ${msg}`;
+}
+
+function explainDraw(m: string, t: Dict) {
+  if (m.includes("draw_bad_phone")) return t.drawBadPhone;
+  if (m.includes("draw_bad_name")) return t.drawBadName;
+  if (m.includes("draw_already")) return t.drawAlready;
+  return `${t.error}: ${m}`;
 }
