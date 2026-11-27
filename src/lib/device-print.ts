@@ -53,7 +53,11 @@ export function effectiveMode(p: PrintPrefs, printerIp: string | null | undefine
  */
 let queue: Promise<unknown> = Promise.resolve();
 export function printInFrame(path: string): Promise<boolean> {
-  const job = queue.then(() => printOne(path));
+  const job = queue.then(async () => {
+    const ok = await printOne(path);
+    if (ok) await helperCut();
+    return ok;
+  });
   queue = job.catch(() => false);
   return job;
 }
@@ -83,6 +87,29 @@ function printOne(path: string): Promise<boolean> {
     frame.src = url;
     document.body.appendChild(frame);
   });
+}
+
+/* Cut helper: a small program on the Windows till (public/print-helper) that sends the printer's
+   ESC/POS cut command after each receipt, because the E-POS driver does not cut Chrome's prints.
+   If it isn't installed the call just fails quietly and printing works as before. */
+const HELPER = "http://127.0.0.1:9123";
+export async function helperCut(): Promise<boolean> {
+  try {
+    const r = await fetch(`${HELPER}/cut?feed=${getPrintPrefs().feed}`, { method: "POST", signal: AbortSignal.timeout(6000) });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+/** Name of the printer the helper cuts on, or null if the helper isn't running on this computer. */
+export async function helperStatus(): Promise<string | null> {
+  try {
+    const r = await fetch(`${HELPER}/ping`, { signal: AbortSignal.timeout(2000) });
+    if (!r.ok) return null;
+    return (await r.text()).replace(/^ok ?/, "") || "?";
+  } catch {
+    return null;
+  }
 }
 
 /* The till is placing an order right now (its receipt is its own to print, not the station's). */
