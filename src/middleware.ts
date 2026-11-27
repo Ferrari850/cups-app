@@ -1,9 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/manifest.webmanifest", "/icon", "/apple-icon"];
+const PUBLIC_PATHS = ["/login", "/manifest.webmanifest", "/icon", "/apple-icon", "/print-helper/"];
 // Paths that never need a login check, so the middleware skips the auth call for them entirely.
-const STATIC_PATHS = ["/manifest.webmanifest", "/icon", "/apple-icon"];
+const STATIC_PATHS = ["/manifest.webmanifest", "/icon", "/apple-icon", "/print-helper/"];
 
 export async function middleware(request: NextRequest) {
   if (STATIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p))) return NextResponse.next();
