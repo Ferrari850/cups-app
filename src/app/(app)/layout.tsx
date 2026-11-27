@@ -4,6 +4,7 @@ import BottomNav, { type NavItem } from "@/components/bottom-nav";
 import { Icon } from "@/components/icons";
 import { ThemeButton } from "@/components/theme";
 import Clock from "@/components/clock";
+import PrintStation from "@/components/print-station";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const { supabase, userId } = await getAuth();
@@ -40,6 +41,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             {t.appName}
           </Link>
           <div className="flex items-center gap-2">
+            <PrintStation label={t.printStationOn} />
             <Clock className="me-2 hidden text-3xl font-extrabold tracking-tight text-bean-900 md:inline" />
             <ThemeButton label={t.switchTheme} />
             <Link href="/notifications" className="icon-btn relative" aria-label={t.notifications}>

@@ -616,7 +616,10 @@ export default function Till({
             />
           )}
           <div className="mt-4 grid grid-cols-2 gap-2">
-            {printMode === "computer" ? (
+            {printMode === "off" ? (
+              // No printer on this device (staff phones): the receipt prints at the till's print station.
+              <p className="muted flex items-center justify-center rounded-2xl bg-bean-50 px-2 text-center text-sm">{t.receiptAtCounter}</p>
+            ) : printMode === "computer" ? (
               <button type="button" className="btn-secondary py-3" onClick={() => computerPrint(done.order.id)}>
                 {prefs.auto ? t.printAgain : t.printReceipt}
               </button>
