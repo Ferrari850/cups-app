@@ -55,7 +55,7 @@ export default function DevicePrinter({ t, hasWifi }: { t: Dict; hasWifi: boolea
               inputMode="numeric"
               className="input num w-28"
               value={p.feed}
-              onChange={(e) => save({ ...p, feed: Math.min(80, Math.max(0, Number(e.target.value) || 0)) })}
+              onChange={(e) => save({ ...p, feed: Math.min(80, Math.max(0, Number(e.target.value) || 0)), feedSet: true })}
             />
           </label>
           <p className="muted text-xs">{t.feedBeforeCutHint}</p>
