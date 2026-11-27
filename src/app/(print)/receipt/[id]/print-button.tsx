@@ -3,7 +3,11 @@
 import { useEffect } from "react";
 import { getPrintPrefs } from "@/lib/device-print";
 
-/** Fits the page to the receipt (80 mm wide, as long as the receipt) so the roll isn't wasted. */
+/**
+ * Print setup for the receipt. The page uses the printer's own paper (pick the 80 mm roll size in the
+ * driver / print dialog) with no margins, so Chrome prints no headers or footers and starts at the top.
+ * A fixed CSS page height didn't work: Chrome shrinks and centres it on the driver's paper instead.
+ */
 function fitPage() {
   const el = document.querySelector<HTMLElement>(".receipt");
   if (!el) return;
@@ -11,16 +15,13 @@ function fitPage() {
   // inside the receipt and the end stays in the printer. Set per device in Settings.
   const feed = getPrintPrefs().feed;
   el.style.setProperty("--tail", `${feed}mm`);
-  // Measured on screen, where the tail is hidden and the receipt has 9 mm of padding that print drops.
-  // A little slack (3 mm) so the receipt never spills onto a second page, which would cut it twice.
-  const mm = Math.ceil((el.scrollHeight * 25.4) / 96) - 9 + feed + 3;
   let tag = document.getElementById("receipt-page") as HTMLStyleElement | null;
   if (!tag) {
     tag = document.createElement("style");
     tag.id = "receipt-page";
     document.head.appendChild(tag);
   }
-  tag.textContent = `@page { size: 80mm ${mm}mm; margin: 0; }`;
+  tag.textContent = "@page { size: auto; margin: 0; }";
 }
 
 function printNow(embed: boolean) {
