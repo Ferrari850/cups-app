@@ -10,7 +10,10 @@ const n = (v: FormDataEntryValue | null) => {
 };
 
 function read(form: FormData) {
+  const station = String(form.get("station") ?? "");
   return {
+    // Only sent once the bar & kitchen database update has run.
+    ...(station === "bar" || station === "kitchen" ? { station } : {}),
     name: String(form.get("name") ?? "").trim(),
     name_ar: String(form.get("name_ar") ?? "").trim() || null,
     category: String(form.get("category") ?? "").trim() || null,

@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-export default function PosTabs({ labels }: { labels: { pos: string; bar: string; orders: string; drawer: string } }) {
+export default function PosTabs({ labels }: { labels: { pos: string; bar: string; kitchen: string; orders: string; drawer: string } }) {
   const path = usePathname();
   const tabs = [
     { href: "/pos", label: labels.pos },
     { href: "/bar", label: labels.bar },
+    { href: "/kitchen", label: labels.kitchen },
     { href: "/orders", label: labels.orders },
     { href: "/drawer", label: labels.drawer },
   ];

@@ -17,7 +17,7 @@ export default async function PosLayout({ children }: { children: React.ReactNod
             <Link href="/" className="icon-btn shrink-0" aria-label={t.home}>
               <Icon name="home" className="h-5 w-5" />
             </Link>
-            <PosTabs labels={{ pos: t.till, bar: t.barDisplay, orders: t.orders, drawer: t.drawer }} />
+            <PosTabs labels={{ pos: t.till, bar: t.barDisplay, kitchen: t.kitchenDisplay, orders: t.orders, drawer: t.drawer }} />
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Clock className="me-1 hidden text-xl font-extrabold tracking-tight text-bean-900 sm:inline" />
