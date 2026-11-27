@@ -121,6 +121,8 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
             {st?.receipt_footer_ar && <div dir="rtl">{st.receipt_footer_ar}</div>}
           </footer>
         )}
+        {/* Blank paper before the cutter; the dot at its end stops the printer driver trimming it off. */}
+        <div className="receipt-tail" aria-hidden="true" />
       </article>
     </>
   );
