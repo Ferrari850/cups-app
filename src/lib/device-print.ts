@@ -12,7 +12,9 @@
 export type PrintMode = "auto" | "computer" | "wifi" | "off";
 /** feed: blank paper (mm) after the receipt, so the whole receipt has passed the cutter before it cuts. */
 export type PrintPrefs = { mode: PrintMode; auto: boolean; feed: number; station: boolean; feedSet?: boolean };
-export const DEFAULT_FEED = 30;
+// 0: the space before the cut comes from the printer driver ("Paper Feed After Page"). A blank tail
+// drawn by the page stopped the E-POS ECO250 from cutting at all.
+export const DEFAULT_FEED = 0;
 
 const KEY = "cups.print";
 
@@ -21,8 +23,8 @@ export function getPrintPrefs(): PrintPrefs {
     const v = JSON.parse(localStorage.getItem(KEY) || "null");
     if (v && ["auto", "computer", "wifi", "off"].includes(v.mode)) {
       let feed = Number(v.feed);
-      // 20 mm was the first default and was too short on the E-POS ECO250: move devices still on it.
-      if (feed === 20 && !v.feedSet) feed = DEFAULT_FEED;
+      // Earlier defaults (20, 30 mm) stopped the cut: devices that never changed it go back to 0.
+      if (!v.feedSet) feed = DEFAULT_FEED;
       return { mode: v.mode, auto: v.auto !== false, feed: Number.isFinite(feed) && feed >= 0 && feed <= 80 ? feed : DEFAULT_FEED, station: v.station === true, feedSet: v.feedSet === true };
     }
   } catch {}
