@@ -10,7 +10,7 @@ import { eposPrint } from "@/lib/epos";
 import { Icon } from "@/components/icons";
 import { enterDraw, lookupPlate, placeOrder, setSoldOut, type PastOrder, type PlacedOrder } from "./actions";
 import { getPrintJob } from "../receipt/actions";
-import { effectiveMode, getPrintPrefs, markPrinted, printInFrame, type PrintPrefs } from "@/lib/device-print";
+import { effectiveMode, getPrintPrefs, markPrinted, printInFrame, startPlacing, type PrintPrefs } from "@/lib/device-print";
 
 type Line = { key: string; itemId: string; options: string[]; qty: number; note: string };
 type PayMode = "cash" | "card" | "split" | "app";
@@ -216,20 +216,25 @@ export default function Till({
     setDrawErr(null);
     const needsCar = ch.needs_car;
     start(async () => {
+      const placed = startPlacing();
       const res = await placeOrder({
         channel_id: ch.id,
         lines: lines.map((l) => ({ menu_item_id: l.itemId, qty: l.qty, options: l.options, note: l.note || undefined })),
         payments,
         ...(needsCar ? car : {}),
         ...cust,
-      }, drawFilled ? draw : undefined);
+      }, drawFilled ? draw : undefined).catch((e) => {
+        placed();
+        throw e;
+      });
+      // On a print-station till, this till handles its own receipt; the station skips it.
+      if (res.ok && prefs.station) markPrinted(res.order.id);
+      placed();
       if (!res.ok) {
         setError(explain(res.error, t));
         return;
       }
       setPaying(null);
-      // On a print-station till, this till handles its own receipt; the station skips it.
-      if (prefs.station) markPrinted(res.order.id);
       const drawn = drawFilled && !res.drawError;
       if (res.drawError) setDrawErr(explainDraw(res.drawError, t));
       setDone({ order: res.order, change, drawn });

@@ -83,6 +83,24 @@ function printOne(path: string): Promise<boolean> {
   });
 }
 
+/* The till is placing an order right now (its receipt is its own to print, not the station's). */
+let placing = 0;
+/** Call before placing an order; call the returned function once the order is placed (or failed). */
+export function startPlacing(): () => void {
+  placing++;
+  let open = true;
+  const done = () => {
+    if (!open) return;
+    open = false;
+    placing--;
+  };
+  setTimeout(done, 15000); // never hold the station for long if something goes wrong
+  return done;
+}
+export function placingHere() {
+  return placing > 0;
+}
+
 /* Print station: the till prints new orders from staff phones. Orders this device has already
    printed (or will print itself) are remembered here so nothing prints twice. */
 const DONE_KEY = "cups.printed";
