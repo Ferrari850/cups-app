@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { effectiveMode, getPrintPrefs, printInFrame } from "@/lib/device-print";
+import { effectiveMode, getPrintPrefs, markPrinted, printInFrame } from "@/lib/device-print";
 
 /** "Print receipt": on a till with its own printer it prints in place; elsewhere it opens the receipt. */
 export default function ReceiptPrintButton({ id, printerIp, label, printingLabel, className }: { id: string; printerIp: string | null | undefined; label: string; printingLabel: string; className?: string }) {
@@ -21,6 +21,7 @@ export default function ReceiptPrintButton({ id, printerIp, label, printingLabel
       disabled={busy}
       onClick={async () => {
         setBusy(true);
+        markPrinted(id);
         await printInFrame(`/receipt/${id}`);
         setBusy(false);
       }}

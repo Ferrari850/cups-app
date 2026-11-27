@@ -10,7 +10,7 @@ import { eposPrint } from "@/lib/epos";
 import { Icon } from "@/components/icons";
 import { enterDraw, lookupPlate, placeOrder, setSoldOut, type PastOrder, type PlacedOrder } from "./actions";
 import { getPrintJob } from "../receipt/actions";
-import { effectiveMode, getPrintPrefs, printInFrame, type PrintPrefs } from "@/lib/device-print";
+import { effectiveMode, getPrintPrefs, markPrinted, printInFrame, type PrintPrefs } from "@/lib/device-print";
 
 type Line = { key: string; itemId: string; options: string[]; qty: number; note: string };
 type PayMode = "cash" | "card" | "split" | "app";
@@ -69,7 +69,7 @@ export default function Till({
   // enters or skips the draw, so the printed receipt shows the entry and the phone.
   const heldPrint = useRef<string | null>(null);
   // This device's receipt printer (set in Settings > This device's printer).
-  const [prefs, setPrefs] = useState<PrintPrefs>({ mode: "auto", auto: true, feed: 20 });
+  const [prefs, setPrefs] = useState<PrintPrefs>({ mode: "auto", auto: true, feed: 20, station: false });
   useEffect(() => setPrefs(getPrintPrefs()), []);
   const printMode = effectiveMode(prefs, settings?.printer_ip);
   const drawMin = Number(settings?.draw_min_total ?? 50);
@@ -153,6 +153,7 @@ export default function Till({
   }
 
   async function computerPrint(orderId: string) {
+    markPrinted(orderId);
     setPrintMsg(t.printing);
     const ok = await printInFrame(`/receipt/${orderId}`);
     setPrintMsg(ok ? t.sentToPrinter : t.printFailed);
@@ -214,6 +215,8 @@ export default function Till({
         return;
       }
       setPaying(null);
+      // On a print-station till, this till handles its own receipt; the station skips it.
+      if (prefs.station) markPrinted(res.order.id);
       setDone({ order: res.order, change });
       if (drawOn && res.order.total > drawMin) heldPrint.current = res.order.id;
       else autoPrint(res.order.id);
