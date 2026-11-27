@@ -7,9 +7,11 @@ import { createItem } from "./actions";
 export default async function ItemsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { supabase, t, locale } = await requireManager();
   const q = (await searchParams).q?.trim() ?? "";
-  let query = supabase.from("items").select("id, name, name_ar, category, base_unit, unit_cost, unit_cost_at").order("name");
+  let query = supabase.from("items").select("*").order("name");
   if (q) query = query.or(`name.ilike.%${q.replace(/[%,()]/g, "")}%,name_ar.ilike.%${q.replace(/[%,()]/g, "")}%`);
-  const { data: items } = await query;
+  const { data } = await query;
+  // Homemade items first, so they are easy to find.
+  const items = [...(data ?? [])].sort((a, b) => Number(!!b.is_prep) - Number(!!a.is_prep));
 
   return (
     <>
@@ -30,16 +32,22 @@ export default async function ItemsPage({ searchParams }: { searchParams: Promis
               <option value="pcs">{t.unit_pcs}</option>
             </select>
           </div>
+          <label className="flex items-start gap-2 py-1 text-sm">
+            <input type="checkbox" name="is_prep" className="mt-1" /> {t.isHomemade}
+          </label>
           <button className="btn-primary w-full">{t.add}</button>
         </form>
       </details>
-      {items?.length ? (
+      {items.length ? (
         <ul className="space-y-2">
           {items.map((i) => (
             <li key={i.id}>
               <RowLink href={`/items/${i.id}`}>
                 <div className="flex justify-between gap-2">
-                  <span className="truncate font-medium">{localName(i, locale)}</span>
+                  <span className="truncate font-medium">
+                    {localName(i, locale)}
+                    {i.is_prep && <span className="ms-2 rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-ink">🏠 {t.homemade}</span>}
+                  </span>
                   <span className="num shrink-0">
                     {i.unit_cost != null
                       ? `${fmtAED(Number(i.unit_cost) * (i.base_unit === "pcs" ? 1 : 1000), locale)} / ${i.base_unit === "pcs" ? t.unit_pcs : i.base_unit === "g" ? "kg" : "L"}`

@@ -24,8 +24,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       }),
     );
 
-    const { data: items } = await supabase.from("items").select("id, name, name_ar, base_unit").order("name");
-    const known = (items ?? []) as KnownItem[];
+    // Homemade items are never on a supplier invoice.
+    const { data: items } = await supabase.from("items").select("*").order("name");
+    const known = (items ?? [])
+      .filter((i) => !i.is_prep)
+      .map((i) => ({ id: i.id, name: i.name, name_ar: i.name_ar, base_unit: i.base_unit })) as KnownItem[];
     const knownIds = new Set(known.map((k) => k.id));
 
     const inv = await readInvoice(blobs, known);
