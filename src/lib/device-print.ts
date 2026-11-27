@@ -10,16 +10,21 @@
  *  - "off": never print by itself.
  */
 export type PrintMode = "auto" | "computer" | "wifi" | "off";
-export type PrintPrefs = { mode: PrintMode; auto: boolean };
+/** feed: blank paper (mm) after the receipt, so the whole receipt has passed the cutter before it cuts. */
+export type PrintPrefs = { mode: PrintMode; auto: boolean; feed: number };
+export const DEFAULT_FEED = 20;
 
 const KEY = "cups.print";
 
 export function getPrintPrefs(): PrintPrefs {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || "null");
-    if (v && ["auto", "computer", "wifi", "off"].includes(v.mode)) return { mode: v.mode, auto: v.auto !== false };
+    if (v && ["auto", "computer", "wifi", "off"].includes(v.mode)) {
+      const feed = Number(v.feed);
+      return { mode: v.mode, auto: v.auto !== false, feed: Number.isFinite(feed) && feed >= 0 && feed <= 80 ? feed : DEFAULT_FEED };
+    }
   } catch {}
-  return { mode: "auto", auto: true };
+  return { mode: "auto", auto: true, feed: DEFAULT_FEED };
 }
 
 export function setPrintPrefs(p: PrintPrefs) {

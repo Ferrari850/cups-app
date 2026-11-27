@@ -38,6 +38,20 @@ export default function DevicePrinter({ t, hasWifi }: { t: Dict; hasWifi: boolea
           <label className="flex items-center gap-2 text-sm font-medium">
             <input type="checkbox" checked={p.auto} onChange={(e) => save({ ...p, auto: e.target.checked })} /> {t.autoPrintAfterSale}
           </label>
+          <label className="block">
+            <span className="label">{t.feedBeforeCut}</span>
+            <input
+              type="number"
+              min={0}
+              max={80}
+              step={1}
+              inputMode="numeric"
+              className="input num w-28"
+              value={p.feed}
+              onChange={(e) => save({ ...p, feed: Math.min(80, Math.max(0, Number(e.target.value) || 0)) })}
+            />
+          </label>
+          <p className="muted text-xs">{t.feedBeforeCutHint}</p>
           <p className="muted text-xs">{t.kioskHint}</p>
           <div className="flex flex-wrap items-center gap-2">
             <button

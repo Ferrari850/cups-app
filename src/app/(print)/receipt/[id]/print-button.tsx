@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
+import { getPrintPrefs } from "@/lib/device-print";
 
 /** Fits the page to the receipt (80 mm wide, as long as the receipt) so the roll isn't wasted. */
 function fitPage() {
   const el = document.querySelector<HTMLElement>(".receipt");
   if (!el) return;
-  const mm = Math.ceil((el.scrollHeight * 25.4) / 96) + 8;
+  // Blank paper after the receipt: the cutter sits above the print head, so without it the cut lands
+  // inside the receipt and the end stays in the printer. Set per device in Settings.
+  const feed = getPrintPrefs().feed;
+  el.style.setProperty("--tail", `${feed}mm`);
+  // Measured on screen, where the tail is hidden and the receipt has 9 mm of padding that print drops.
+  // A little slack (3 mm) so the receipt never spills onto a second page, which would cut it twice.
+  const mm = Math.ceil((el.scrollHeight * 25.4) / 96) - 9 + feed + 3;
   let tag = document.getElementById("receipt-page") as HTMLStyleElement | null;
   if (!tag) {
     tag = document.createElement("style");
