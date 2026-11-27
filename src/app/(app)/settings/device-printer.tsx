@@ -38,6 +38,13 @@ export default function DevicePrinter({ t, hasWifi }: { t: Dict; hasWifi: boolea
           <label className="flex items-center gap-2 text-sm font-medium">
             <input type="checkbox" checked={p.auto} onChange={(e) => save({ ...p, auto: e.target.checked })} /> {t.autoPrintAfterSale}
           </label>
+          <label className="flex items-start gap-2 text-sm font-medium">
+            <input type="checkbox" className="mt-1" checked={p.station} onChange={(e) => save({ ...p, station: e.target.checked })} />
+            <span>
+              {t.printStation}
+              <span className="muted block text-xs font-normal">{t.printStationHint}</span>
+            </span>
+          </label>
           <label className="block">
             <span className="label">{t.feedBeforeCut}</span>
             <input

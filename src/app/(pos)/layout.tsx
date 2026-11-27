@@ -5,6 +5,7 @@ import { ThemeButton } from "@/components/theme";
 import LangToggle from "@/components/lang-toggle";
 import Clock from "@/components/clock";
 import PosTabs from "./pos-tabs";
+import PrintStation from "@/components/print-station";
 
 /** Full-width layout for the counter tablets: till, bar display and receipts. */
 export default async function PosLayout({ children }: { children: React.ReactNode }) {
@@ -20,6 +21,7 @@ export default async function PosLayout({ children }: { children: React.ReactNod
             <PosTabs labels={{ pos: t.till, bar: t.barDisplay, kitchen: t.kitchenDisplay, orders: t.orders, drawer: t.drawer }} />
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <PrintStation label={t.printStationOn} />
             <Clock className="me-1 hidden text-xl font-extrabold tracking-tight text-bean-900 sm:inline" />
             <LangToggle locale={locale} label={locale === "ar" ? "EN" : "ع"} className="icon-btn hidden text-sm font-bold sm:inline-flex" />
             <span className="hidden sm:inline-flex"><ThemeButton label={t.switchTheme} /></span>
