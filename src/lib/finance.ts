@@ -65,8 +65,8 @@ export type VatSettings = {
 const n = (v: unknown) => Number(v ?? 0) || 0;
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
-/** A UAE TRN is 15 digits and starts with 100. */
-export const validTrn = (trn: string | null | undefined) => !!trn && /^100\d{12}$/.test(trn.replace(/\s|-/g, ""));
+/** A UAE TRN is 15 digits (most start with 100, but not all: e.g. 105...). */
+export const validTrn = (trn: string | null | undefined) => !!trn && /^\d{15}$/.test(trn.replace(/\s|-/g, ""));
 
 function monthEnd(y: number, m: number) {
   // m is 1-12; day 0 of the next month is the last day of this one
