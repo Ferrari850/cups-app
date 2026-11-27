@@ -15,7 +15,7 @@ type Line = {
   id: string;
   quantity: number;
   waste_pct: number;
-  items: { id: string; name: string; name_ar: string | null; base_unit: string; unit_cost: number | null } | null;
+  items: { id: string; name: string; name_ar: string | null; base_unit: string; unit_cost: number | null; is_prep?: boolean } | null;
 };
 
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,10 +25,10 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
     supabase.from("menu_items").select("*").eq("id", id).single(),
     supabase
       .from("recipe_lines")
-      .select("id, quantity, waste_pct, items(id, name, name_ar, base_unit, unit_cost)")
+      .select("id, quantity, waste_pct, items(*)")
       .eq("menu_item_id", id)
       .order("sort"),
-    supabase.from("items").select("id, name, name_ar, base_unit, unit_cost").order("name"),
+    supabase.from("items").select("*").order("name"),
     // POS tables; empty until the POS database update has run.
     supabase.from("channels").select("*").eq("active", true).order("sort"),
     supabase.from("channel_prices").select("channel_id, price").eq("menu_item_id", id),
@@ -104,7 +104,7 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
           <option value="" disabled>—</option>
           {(items ?? []).map((i) => (
             <option key={i.id} value={i.id}>
-              {localName(i, locale)} ({unitLabel(i.base_unit)}){i.unit_cost != null ? ` · ${fmtAED(Number(i.unit_cost) * (i.base_unit === "pcs" ? 1 : 1000), locale)}/${i.base_unit === "pcs" ? unitLabel("pcs") : i.base_unit === "g" ? "kg" : "L"}` : ""}
+              {i.is_prep ? "🏠 " : ""}{localName(i, locale)} ({unitLabel(i.base_unit)}){i.unit_cost != null ? ` · ${fmtAED(Number(i.unit_cost) * (i.base_unit === "pcs" ? 1 : 1000), locale)}/${i.base_unit === "pcs" ? unitLabel("pcs") : i.base_unit === "g" ? "kg" : "L"}` : ""}
             </option>
           ))}
         </select>
@@ -122,7 +122,9 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
             <li key={l.id} className="card">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <span className="font-medium">
-                  {l.items ? localName(l.items, locale) : "?"}
+                  {l.items ? (
+                    l.items.is_prep ? <Link href={`/items/${l.items.id}`} className="underline">🏠 {localName(l.items, locale)}</Link> : localName(l.items, locale)
+                  ) : "?"}
                   {oddQty(l) && <span className="ms-1 text-red-700" title={t.checkQuantities}>⚠️</span>}
                 </span>
                 <span className="num font-semibold">{c != null ? fmtAED(c, locale, 3) : t.noPrice}</span>
