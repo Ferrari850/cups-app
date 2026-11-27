@@ -269,10 +269,11 @@ select.input {
   }
 }
 @media print {
+  /* Fill whatever width the printer's paper is (80 mm, or 72 mm printable on some drivers). */
   .receipt {
-    margin: 0 4mm;
-    padding-top: 0;
-    padding-bottom: 0;
+    width: auto;
+    margin: 0;
+    padding: 0 2mm;
   }
 }
 
