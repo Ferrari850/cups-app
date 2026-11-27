@@ -252,7 +252,7 @@ select.input {
 }
 .receipt-tail {
   position: relative;
-  height: var(--tail, 20mm);
+  height: var(--tail, 0mm);
 }
 .receipt-tail::after {
   content: "";
