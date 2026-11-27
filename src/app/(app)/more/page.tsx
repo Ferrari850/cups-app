@@ -12,6 +12,7 @@ export default async function MorePage() {
     { href: "/bar", label: t.barDisplay, icon: "cup", show: true },
     { href: "/orders", label: t.orders, icon: "receipt", show: true },
     { href: "/drawer", label: t.drawer, icon: "cash", show: true },
+    { href: "/finance", label: t.finance, icon: "cash", show: isManager },
     { href: "/reports", label: t.reports, icon: "chart", show: isManager },
     { href: "/stock", label: t.stock, icon: "box", show: isManager },
     { href: "/prices", label: t.priceList, icon: "tag", show: isManager },
