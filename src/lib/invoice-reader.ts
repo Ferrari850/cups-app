@@ -7,7 +7,7 @@ import { z } from "zod/v4";
 const MODEL = process.env.INVOICE_MODEL || "claude-opus-5-5";
 
 export const InvoiceSchema = z.object({
-  supplier_name: z.string().describe("Supplier / vendor company name, in English if printed, otherwise as printed"),
+  supplier_name: z.string().describe("Supplier / vendor company name, in English if printed, otherwise as printed. Empty string if none is shown (e.g. a price list)"),
   supplier_name_ar: z.string().nullable().describe("Supplier name in Arabic if printed"),
   supplier_trn: z.string().nullable().describe("UAE Tax Registration Number (TRN) of the supplier, digits only"),
   invoice_number: z.string().nullable(),
@@ -57,7 +57,17 @@ Prices must be EXCLUDING VAT. If the invoice only shows VAT-inclusive line price
 Read numbers carefully: Arabic-Indic digits (٠١٢٣٤٥٦٧٨٩) are ordinary digits; the Arabic decimal separator is ٫.
 If something is unreadable, use null rather than guessing, and mention it in notes.`;
 
-export async function readInvoice(files: InvoiceFile[], known: KnownItem[]): Promise<ExtractedInvoice> {
+const PRICE_LIST = `This upload is NOT an invoice: it is a PRICE LIST, the cafe's own list of ingredient costs, possibly handwritten, typed, printed or a screenshot of a spreadsheet, over several pages.
+There is usually no invoice number, quantity, VAT or total: use null for those. supplier_name is the supplier only if one supplier is named for the whole list, else an empty string.
+Each line is one product with the price for one purchase unit (a pack, carton, bottle, kg...). Put that price in unit_price and leave quantity and line_total null.
+If a line names its own pack (e.g. "Milk 2L x 6 ctn 39"), use it for unit and pack_size. If the list says prices include VAT, divide by 1.05 and say so in notes; otherwise take prices as written.
+Headings, page numbers and blank rows are not lines. If the same product appears twice with different prices, keep both and mention it in notes.`;
+
+export async function readInvoice(
+  files: InvoiceFile[],
+  known: KnownItem[],
+  kind: "invoice" | "price_list" = "invoice",
+): Promise<ExtractedInvoice> {
   const client = new Anthropic();
 
   const content: Anthropic.Beta.BetaContentBlockParam[] = files.map((f) =>
@@ -84,12 +94,13 @@ export async function readInvoice(files: InvoiceFile[], known: KnownItem[]): Pro
 
   content.push({
     type: "text",
-    text: `Today's date (Dubai): ${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Dubai" })}.\n\nKnown ingredients (id | name | arabic name | unit):\n${knownList}\n\nExtract this invoice (${files.length} page(s)).`,
+    text: `${kind === "price_list" ? PRICE_LIST + "\n\n" : ""}Today's date (Dubai): ${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Dubai" })}.\n\nKnown ingredients (id | name | arabic name | unit):\n${knownList}\n\nExtract this ${kind === "price_list" ? "price list" : "invoice"} (${files.length} page(s)).`,
   });
 
   const response = await client.beta.messages.parse({
     model: MODEL,
-    max_tokens: 16000,
+    // Price lists can be long (100+ lines). Above ~21k the SDK requires streaming.
+    max_tokens: kind === "price_list" ? 21000 : 16000,
     betas: ["server-side-fallback-2026-07-01"],
     fallbacks: "default",
     system: SYSTEM,
@@ -98,7 +109,7 @@ export async function readInvoice(files: InvoiceFile[], known: KnownItem[]): Pro
   });
 
   if (response.stop_reason === "refusal") throw new Error("The reader declined this file.");
-  if (response.stop_reason === "max_tokens") throw new Error("Invoice too long to read in one go. Try fewer pages.");
+  if (response.stop_reason === "max_tokens") throw new Error("Too long to read in one go. Upload fewer pages at a time.");
   if (!response.parsed_output) throw new Error("Could not understand the reader's answer.");
   return response.parsed_output;
 }

@@ -157,6 +157,17 @@ const en = {
   status_review: "Needs review",
   status_confirmed: "Saved",
   status_failed: "Failed",
+  costList: "Cost list",
+  newCostList: "Add cost list",
+  costListHint:
+    "Photograph each page of your ingredient cost list (or choose several photos at once). Claude reads every line, then you link each one to an ingredient. Prices are saved to price history; no stock is added and it is not counted in Finance. For long lists, upload about 5 pages at a time.",
+  readCostList: "Read cost list",
+  readingCostList: "Reading the cost list… long lists can take 2 to 3 minutes.",
+  costListDate: "Prices as of",
+  supplierOptional: "Supplier (optional)",
+  costListReviewHint:
+    "Check each price, link it to an ingredient (or + New ingredient), and fill in how much one unit contains, e.g. 1 KG = 1000 g. Lines left unlinked are not saved; you can come back to them later.",
+  saveCostList: "Save prices",
   reviewHint:
     "Check each line. Link it to an ingredient and say how much one unit contains (e.g. 1 carton = 12000 ml). The app remembers this for next time.",
   aiNotes: "Notes from the reader",
@@ -814,6 +825,17 @@ const ar: Dict = {
   status_review: "بحاجة لمراجعة",
   status_confirmed: "محفوظة",
   status_failed: "فشلت",
+  costList: "قائمة التكاليف",
+  newCostList: "إضافة قائمة تكاليف",
+  costListHint:
+    "صوّر كل صفحة من قائمة تكاليف المكوّنات (أو اختر عدة صور مرة واحدة). يقرأ Claude كل سطر، ثم تربط كل سطر بمكوّن. تُحفظ الأسعار في سجل الأسعار، ولا يُضاف مخزون ولا تُحسب في المالية. للقوائم الطويلة، ارفع نحو 5 صفحات في كل مرة.",
+  readCostList: "قراءة قائمة التكاليف",
+  readingCostList: "جارٍ قراءة قائمة التكاليف… القوائم الطويلة قد تستغرق 2 إلى 3 دقائق.",
+  costListDate: "الأسعار بتاريخ",
+  supplierOptional: "المورّد (اختياري)",
+  costListReviewHint:
+    "تحقق من كل سعر واربطه بمكوّن (أو + مكوّن جديد)، واكتب كم تحتوي الوحدة الواحدة، مثل 1 كجم = 1000 غ. الأسطر غير المربوطة لا تُحفظ، ويمكنك العودة إليها لاحقاً.",
+  saveCostList: "حفظ الأسعار",
   reviewHint:
     "راجع كل سطر. اربطه بمكوّن وحدد ما تحتويه الوحدة الواحدة (مثلاً: كرتونة = 12000 مل). سيتذكر التطبيق ذلك في المرة القادمة.",
   aiNotes: "ملاحظات القارئ",

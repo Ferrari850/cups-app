@@ -10,7 +10,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const { data: isManager } = await supabase.rpc("is_manager");
   if (!isManager) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-  const { data: files } = await supabase.from("invoice_files").select("*").eq("invoice_id", id).order("page_no");
+  const [{ data: files }, { data: head }] = await Promise.all([
+    supabase.from("invoice_files").select("*").eq("invoice_id", id).order("page_no"),
+    supabase.from("invoices").select("kind").eq("id", id).single(),
+  ]);
+  const kind = head?.kind === "price_list" ? "price_list" : "invoice";
   if (!files?.length) return NextResponse.json({ error: "no files" }, { status: 400 });
 
   await supabase.from("invoices").update({ status: "reading", error: null }).eq("id", id);
@@ -31,7 +35,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       .map((i) => ({ id: i.id, name: i.name, name_ar: i.name_ar, base_unit: i.base_unit })) as KnownItem[];
     const knownIds = new Set(known.map((k) => k.id));
 
-    const inv = await readInvoice(blobs, known);
+    const inv = await readInvoice(blobs, known, kind);
+    inv.supplier_name = (inv.supplier_name ?? "").trim();
 
     // Supplier: match by tax number, then by name; create when new.
     let supplierId: string | null = null;
@@ -78,7 +83,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         item_id: l.is_ingredient ? itemId : null,
         quantity: l.quantity,
         unit: l.unit,
-        unit_price: l.unit_price ?? (l.line_total != null && l.quantity ? l.line_total / l.quantity : null),
+        unit_price: l.unit_price ?? (l.line_total != null && l.quantity ? l.line_total / l.quantity : kind === "price_list" ? l.line_total : null),
         line_total: l.line_total,
         pack_size:
           alias?.pack_size ??
@@ -100,7 +105,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       .update({
         status: "review",
         supplier_id: supplierId,
-        supplier_name: inv.supplier_name,
+        supplier_name: inv.supplier_name || null,
         invoice_number: inv.invoice_number,
         invoice_date: /^\d{4}-\d{2}-\d{2}$/.test(inv.invoice_date ?? "") ? inv.invoice_date : null,
         currency: inv.currency || "AED",

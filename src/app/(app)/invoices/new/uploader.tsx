@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Dict } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
 import { Icon } from "@/components/icons";
-import { createInvoice, registerFiles } from "../actions";
+import { createInvoice, registerFiles, type InvoiceKind } from "../actions";
 
 type Page = { file: Blob; mime: string; preview: string | null; name: string };
 
@@ -26,7 +26,8 @@ async function compress(file: File): Promise<Blob> {
   }
 }
 
-export default function Uploader({ t }: { t: Dict }) {
+export default function Uploader({ t, kind = "invoice" }: { t: Dict; kind?: InvoiceKind }) {
+  const priceList = kind === "price_list";
   const router = useRouter();
   const [pages, setPages] = useState<Page[]>([]);
   const [busy, setBusy] = useState<"" | "upload" | "read">("");
@@ -64,7 +65,7 @@ export default function Uploader({ t }: { t: Dict }) {
     setBusy("upload");
     let id = "";
     try {
-      id = await createInvoice();
+      id = await createInvoice(kind);
       const supabase = createClient();
       const uploaded: { path: string; mime: string }[] = [];
       for (const [i, p] of pages.entries()) {
@@ -89,12 +90,13 @@ export default function Uploader({ t }: { t: Dict }) {
     return (
       <div className="card flex flex-col items-center gap-4 py-12 text-center">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-bean-200 border-t-accent" />
-        <p className="font-medium">{busy === "upload" ? t.uploading : t.reading}</p>
+        <p className="font-medium">{busy === "upload" ? t.uploading : priceList ? t.readingCostList : t.reading}</p>
       </div>
     );
 
   return (
     <div className="space-y-4">
+      {priceList && <p className="muted">{t.costListHint}</p>}
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
       <input ref={filesRef} type="file" accept="image/*,application/pdf" multiple className="hidden" onChange={(e) => { add(e.target.files); e.target.value = ""; }} />
 
@@ -132,7 +134,7 @@ export default function Uploader({ t }: { t: Dict }) {
           </ul>
           {error && <p className="text-sm text-red-700">{error}</p>}
           <button className="btn-primary w-full py-4 text-base" onClick={submit}>
-            {t.readInvoice} →
+            {priceList ? t.readCostList : t.readInvoice} →
           </button>
         </>
       )}

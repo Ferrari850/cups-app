@@ -24,7 +24,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     ? (await supabase.storage.from("invoices").createSignedUrls(files.map((f) => f.storage_path), 3600)).data ?? []
     : [];
 
-  const title = inv.supplier_name ?? t.newInvoice;
+  const priceList = inv.kind === "price_list";
+  const title = inv.supplier_name ?? (priceList ? t.costList : t.newInvoice);
   const unsaved = (lines ?? []).filter((l) => !l.applied).length;
 
   return (
@@ -54,7 +55,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
       {inv.status === "reading" && (
         <div className="card flex flex-col items-center gap-4 py-10 text-center">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-bean-200 border-t-accent" />
-          <p>{t.reading}</p>
+          <p>{priceList ? t.readingCostList : t.reading}</p>
           <Poller />
           <RetryButton id={id} label={t.tryAgain} subtle />
         </div>
@@ -74,6 +75,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           locale={locale}
           invoice={{
             id,
+            kind: priceList ? "price_list" : "invoice",
             supplier_name: inv.supplier_name ?? "",
             invoice_number: inv.invoice_number,
             invoice_date: inv.invoice_date,
@@ -111,6 +113,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               <SubmitButton className="btn-primary w-full">{t.reopenInvoice}</SubmitButton>
             </form>
           )}
+          {priceList ? (
+            <div className="card grid grid-cols-2 gap-2 text-sm">
+              <div className="muted">{t.costListDate}</div>
+              <div className="num">{inv.invoice_date ? fmtDate(inv.invoice_date, locale, { year: "numeric" }) : "–"}</div>
+            </div>
+          ) : (
           <div className="card grid grid-cols-2 gap-2 text-sm">
             <div className="muted">{t.invoiceNo}</div>
             <div className="num">{inv.invoice_number ?? "–"}</div>
@@ -123,6 +131,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             <div className="muted font-semibold">{t.total}</div>
             <div className="num font-semibold">{fmtAED(inv.total, locale)}</div>
           </div>
+          )}
           <ul className="space-y-2">
             {(lines ?? []).map((l) => {
               const alert = alerts?.find((a) => a.item_id === l.item_id);
@@ -135,7 +144,9 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                       <div className="muted truncate">{l.raw_name}</div>
                     </div>
                     <div className="num shrink-0 text-end">
-                      <div>{fmtNum(l.quantity, locale)} × {fmtAED(l.unit_price, locale)}</div>
+                      <div>
+                        {priceList ? `${fmtAED(l.unit_price, locale)}${l.unit ? ` / ${l.unit}` : ""}` : `${fmtNum(l.quantity, locale)} × ${fmtAED(l.unit_price, locale)}`}
+                      </div>
                       {l.pack_size && l.unit_price != null && (
                         <div className="muted">
                           {fmtAED(Number(l.unit_price) / Number(l.pack_size) * (unit === "pcs" ? 1 : 1000), locale)} / {unit === "pcs" ? t.unit_pcs : unit === "g" ? "kg" : "L"}
