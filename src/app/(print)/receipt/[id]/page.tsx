@@ -5,16 +5,36 @@ import { invoiceNo, type Settings } from "@/lib/pos";
 import { RECEIPT_SELECT, type ReceiptOrder } from "@/lib/receipt";
 import PrintButton from "./print-button";
 
-/** VAT receipt sized for 80 mm receipt paper. Prints from any tablet through the browser. */
-export default async function ReceiptPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ print?: string }> }) {
+/** A made-up order for "Test print" in Settings, with Arabic, a modifier and a note. */
+function sampleOrder(): ReceiptOrder {
+  const line = (n: number, name: string, name_ar: string, qty: number, price: number, mods: ReceiptOrder["order_lines"][number]["modifiers"] = [], note: string | null = null) => ({
+    id: `l${n}`, name, name_ar, qty, unit_price: price, line_total: qty * price, unit_cost: 0, note, sort: n, modifiers: mods,
+  });
+  return {
+    id: "sample", invoice_no: 0, ticket_no: 0, created_at: new Date().toISOString(), status: "paid",
+    total: 50, vat: 2.38, refunded: 0, refund_reason: null, car_plate: null, car_color: null, parking_spot: null,
+    customer_name: null, customer_phone: null, external_ref: null, notes: null, staff_id: null,
+    channels: { name: "Test print", name_ar: "طباعة تجريبية", code: "test" },
+    order_lines: [
+      line(1, "Spanish Latte", "سبانش لاتيه", 2, 18, [{ id: "m1", name: "Oat milk", name_ar: "حليب الشوفان", price: 0 }], "Less sugar"),
+      line(2, "Pistachio Croissant", "كرواسون فستق", 1, 14),
+    ],
+    payments: [{ method: "cash", amount: 50, created_at: new Date().toISOString() }],
+  };
+}
+
+/** VAT receipt for 80 mm thermal paper (72 mm printed). Prints from any device through the browser. */
+export default async function ReceiptPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ print?: string; embed?: string }> }) {
   const [{ id }, sp] = await Promise.all([params, searchParams]);
   const { supabase, t } = await getSession();
+  const sample = id === "sample";
   const [{ data }, { data: s }] = await Promise.all([
-    supabase.from("orders").select(RECEIPT_SELECT).eq("id", id).maybeSingle(),
+    sample ? Promise.resolve({ data: sampleOrder() }) : supabase.from("orders").select(RECEIPT_SELECT).eq("id", id).maybeSingle(),
     supabase.from("cafe_settings").select("*").maybeSingle(),
   ]);
   if (!data) notFound();
   const o = data as unknown as ReceiptOrder;
+  const embed = sp.embed === "1";
   const st = s as Settings | null;
   const en = "en" as const;
   const when = new Intl.DateTimeFormat("en-GB", {
@@ -27,10 +47,10 @@ export default async function ReceiptPage({ params, searchParams }: { params: Pr
 
   return (
     <>
-      <div className="mx-auto mb-3 flex max-w-[80mm] gap-2 print:hidden">
-        <PrintButton label={t.printReceipt} auto={sp.print === "1"} />
+      <div className={embed ? "hidden" : "mx-auto my-3 flex w-[80mm] gap-2 print:hidden"}>
+        <PrintButton label={t.printReceipt} auto={sp.print === "1"} embed={embed} />
       </div>
-      <article className="receipt mx-auto max-w-[80mm] bg-white p-3 font-mono text-[12px] leading-snug text-black shadow-card print:max-w-none print:p-0 print:shadow-none">
+      <article className="receipt" dir="ltr">
         <header className="text-center">
           <div className="text-lg font-bold">{st?.name ?? "CUPS"}</div>
           {st?.name_ar && <div className="text-base font-bold" dir="rtl">{st.name_ar}</div>}

@@ -3,7 +3,7 @@ import { requireManager } from "@/lib/session";
 import { dubaiDate, fmtAED, fmtDate } from "@/lib/format";
 import { localName } from "@/lib/i18n";
 import { profitAndLoss, vat201 } from "@/lib/finance";
-import PrintButton from "@/app/(pos)/receipt/[id]/print-button";
+import PrintButton from "@/app/(print)/receipt/[id]/print-button";
 import { DbUpdateNeeded } from "@/components/db-update";
 import { loadFinance, type FinanceSearch } from "@/app/(app)/finance/data";
 import { PnlTable, Vat201Table, vatChecks } from "@/app/(app)/finance/views";

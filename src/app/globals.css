@@ -223,6 +223,39 @@ select.input {
   }
 }
 
+/* The receipt itself: 72 mm is what an 80 mm thermal printer actually prints (576 dots).
+   Black, bold-ish text: thermal heads print thin grey strokes faintly. The page height is
+   set to the receipt's length when printing (print-button.tsx), so no paper is wasted. */
+.receipt {
+  width: 72mm;
+  margin: 0 auto;
+  padding: 3mm 0 6mm;
+  background: #fff;
+  color: #000;
+  font-size: 12.5px;
+  line-height: 1.35;
+  font-weight: 500;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.receipt b,
+.receipt .font-bold,
+.receipt .font-extrabold {
+  font-weight: 800;
+}
+@media screen {
+  .receipt {
+    padding-inline: 3mm;
+    width: 78mm;
+    box-shadow: 0 1px 6px rgb(0 0 0 / 0.15);
+  }
+}
+@media print {
+  .receipt {
+    margin: 0 4mm;
+  }
+}
+
 /* Phones and tablets: iPhones zoom into any box typed in below 16px, so keep typing at 16px;
    stop the text from growing when a phone is turned sideways; never let the page slide sideways. */
 html {

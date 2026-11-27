@@ -7,6 +7,7 @@ import { invoiceNo } from "@/lib/pos";
 import { RECEIPT_SELECT, type ReceiptOrder } from "@/lib/receipt";
 import RefundForm from "./refund-form";
 import WifiPrint from "./wifi-print";
+import ReceiptPrintButton from "@/components/receipt-print-button";
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -73,7 +74,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         {o.refund_reason && <p className="mt-2 text-sm text-red-700">{t.refund}: {o.refund_reason}</p>}
       </div>
       <div className="mb-3 grid grid-cols-2 gap-2">
-        <a href={`/receipt/${o.id}?print=1`} target="_blank" className="btn-secondary">{t.printReceipt}</a>
+        <ReceiptPrintButton id={o.id} printerIp={s?.printer_ip} label={t.printReceipt} printingLabel={t.printing} className="btn-secondary" />
         {s?.printer_ip ? <WifiPrint id={o.id} t={t} /> : <span />}
       </div>
       {o.status !== "cancelled" && <RefundForm id={o.id} t={t} isManager={isManager} />}
