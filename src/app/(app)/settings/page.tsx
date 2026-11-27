@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui";
 import SubmitButton from "@/components/submit-button";
 import { saveSettings } from "./actions";
 import TestPrint from "./test-print";
+import DevicePrinter from "./device-printer";
 import { EMIRATES, validTrn, type VatSettings } from "@/lib/finance";
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
@@ -92,6 +93,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         </section>
         <SubmitButton className="btn-primary w-full">{t.save}</SubmitButton>
       </form>
+      <DevicePrinter t={t} hasWifi={!!s.printer_ip} />
     </>
   );
 }

@@ -10,6 +10,7 @@ import { eposPrint } from "@/lib/epos";
 import { Icon } from "@/components/icons";
 import { enterDraw, lookupPlate, placeOrder, setSoldOut, type PastOrder, type PlacedOrder } from "./actions";
 import { getPrintJob } from "../receipt/actions";
+import { effectiveMode, getPrintPrefs, printInFrame, type PrintPrefs } from "@/lib/device-print";
 
 type Line = { key: string; itemId: string; options: string[]; qty: number; note: string };
 type PayMode = "cash" | "card" | "split" | "app";
@@ -67,6 +68,10 @@ export default function Till({
   // When the order can go in the prize draw, the Wi-Fi receipt waits until the cashier
   // enters or skips the draw, so the printed receipt shows the entry and the phone.
   const heldPrint = useRef<string | null>(null);
+  // This device's receipt printer (set in Settings > This device's printer).
+  const [prefs, setPrefs] = useState<PrintPrefs>({ mode: "auto", auto: true });
+  useEffect(() => setPrefs(getPrintPrefs()), []);
+  const printMode = effectiveMode(prefs, settings?.printer_ip);
   const drawMin = Number(settings?.draw_min_total ?? 50);
   const drawOn = !!settings?.draw_enabled && !ch?.is_app;
 
@@ -138,7 +143,19 @@ export default function Till({
   function releasePrint() {
     const id = heldPrint.current;
     heldPrint.current = null;
-    if (id) wifiPrint(id).catch(() => setPrintMsg(t.printFailed));
+    if (id) autoPrint(id);
+  }
+
+  /** Prints the receipt by itself after a sale, on whatever printer this device uses. */
+  function autoPrint(orderId: string) {
+    if (printMode === "wifi") wifiPrint(orderId).catch(() => setPrintMsg(t.printFailed));
+    else if (printMode === "computer" && prefs.auto) computerPrint(orderId);
+  }
+
+  async function computerPrint(orderId: string) {
+    setPrintMsg(t.printing);
+    const ok = await printInFrame(`/receipt/${orderId}`);
+    setPrintMsg(ok ? t.sentToPrinter : t.printFailed);
   }
 
   function reset() {
@@ -199,7 +216,7 @@ export default function Till({
       setPaying(null);
       setDone({ order: res.order, change });
       if (drawOn && res.order.total > drawMin) heldPrint.current = res.order.id;
-      else wifiPrint(res.order.id).catch(() => setPrintMsg(t.printFailed));
+      else autoPrint(res.order.id);
     });
   }
 
@@ -596,14 +613,20 @@ export default function Till({
             />
           )}
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <a href={`/receipt/${done.order.id}?print=1`} target="_blank" className="btn-secondary py-3">
-              {t.printReceipt}
-            </a>
+            {printMode === "computer" ? (
+              <button type="button" className="btn-secondary py-3" onClick={() => computerPrint(done.order.id)}>
+                {prefs.auto ? t.printAgain : t.printReceipt}
+              </button>
+            ) : (
+              <a href={`/receipt/${done.order.id}?print=1`} target="_blank" className="btn-secondary py-3">
+                {t.printReceipt}
+              </a>
+            )}
             <button type="button" className="btn-primary py-3" onClick={reset}>
               {t.newOrder}
             </button>
           </div>
-          {settings?.printer_ip && (
+          {printMode === "wifi" && (
             <button type="button" className="btn-secondary btn-sm mt-2 w-full" onClick={() => wifiPrint(done.order.id)}>
               <Icon name="receipt" className="h-4 w-4" /> {t.printAgainWifi}
             </button>
