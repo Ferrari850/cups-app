@@ -6,7 +6,7 @@ import { effectiveMode, getPrintPrefs, markPrinted, printInFrame, setStationSinc
 
 /**
  * Print station: on the till that has the receipt printer, prints every new order placed on any
- * device (staff phones, tablets). Runs on every POS screen of that till while it is open.
+ * device (staff phones, tablets). Runs on every screen of the app on that till while it is open.
  * Turned on in Settings > This device's receipt printer. Waits a few seconds after an order is placed
  * so the device that took it can enter the prize draw or print it itself first.
  */
@@ -19,8 +19,13 @@ export default function PrintStation({ label }: { label: string }) {
   const running = useRef(false);
 
   useEffect(() => {
-    const p = getPrintPrefs();
-    setOn(p.station && effectiveMode(p, null) === "computer");
+    const read = () => {
+      const p = getPrintPrefs();
+      setOn(p.station && effectiveMode(p, null) === "computer");
+    };
+    read();
+    window.addEventListener("cups-print-prefs", read); // turned on or off in Settings
+    return () => window.removeEventListener("cups-print-prefs", read);
   }, []);
 
   useEffect(() => {

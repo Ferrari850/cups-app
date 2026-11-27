@@ -31,6 +31,7 @@ export function setPrintPrefs(p: PrintPrefs) {
   try {
     localStorage.setItem(KEY, JSON.stringify(p));
   } catch {}
+  window.dispatchEvent(new Event("cups-print-prefs"));
 }
 
 /** What actually happens on this device, given the cafe's Wi-Fi printer setting. */
