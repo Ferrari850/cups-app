@@ -43,6 +43,8 @@ export type FinanceReport = {
   sales: { orders: number; gross: number; vat: number };
   refunds: { orders: number; gross: number; vat: number };
   cogs: number;
+  /** Part of cogs that is packaging (cups, lids, boxes...). */
+  cogs_packaging?: number;
   commission: number;
   uncosted_sales: number;
   waste: number;
@@ -130,6 +132,7 @@ export function profitAndLoss(rep: FinanceReport) {
   const refundsNet = n(rep.refunds.gross) - n(rep.refunds.vat);
   const revenue = r2(salesNet - refundsNet);
   const cogs = r2(n(rep.cogs));
+  const cogsPackaging = r2(n(rep.cogs_packaging ?? 0));
   const gross = r2(revenue - cogs);
   // Platform fees: use what was entered from the app's own statements; until then, the estimate from commission %.
   const platformActual = rep.expenses.filter((e) => e.category === "platform_fees");
@@ -156,6 +159,8 @@ export function profitAndLoss(rep: FinanceReport) {
     refundsNet: r2(refundsNet),
     revenue,
     cogs,
+    cogsIngredients: r2(cogs - cogsPackaging),
+    cogsPackaging,
     grossProfit: gross,
     grossMargin: revenue > 0 ? (gross / revenue) * 100 : null,
     platform: r2(platform),

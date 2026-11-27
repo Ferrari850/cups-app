@@ -35,6 +35,8 @@ export async function updateItem(form: FormData) {
     patch.is_prep = prep;
     if (prep && form.get("was_prep") !== "1") patch.track_stock = false;
   }
+  // Packaging switch: only sent once the packaging update has run.
+  if (form.get("has_packaging") === "1") patch.is_packaging = form.get("is_packaging") === "on" && !prep;
   // Optional manual price, entered per kg / L / piece for convenience.
   const manual = String(form.get("manual_price") ?? "").trim();
   if (manual && !prep) {
